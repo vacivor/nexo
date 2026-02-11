@@ -1,0 +1,88 @@
+package io.vacivor.nexo.security.web.session.inmemory;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import io.micronaut.context.annotation.Requires;
+import io.vacivor.nexo.security.web.session.SessionConfiguration;
+import io.vacivor.nexo.security.web.session.SessionRepository;
+import jakarta.inject.Singleton;
+import java.time.Duration;
+import java.util.Optional;
+
+@Singleton
+@Requires(property = "nexo.session.store", value = "inmemory")
+public class InMemorySessionRepository implements SessionRepository<InMemorySession> {
+
+  private final SessionConfiguration configuration;
+  private final Cache<String, InMemorySession> cache;
+
+  public InMemorySessionRepository(SessionConfiguration configuration) {
+    this.configuration = configuration;
+    this.cache = Caffeine.newBuilder()
+        .maximumSize(configuration.getInMemoryMaximumSize())
+        .expireAfter(new SessionExpiry())
+        .build();
+  }
+
+  @Override
+  public InMemorySession createSession(String id) {
+    InMemorySession session = new InMemorySession(id);
+    session.setMaxInactiveInterval(configuration.getMaxInactiveInterval());
+    return session;
+  }
+
+  @Override
+  public Optional<InMemorySession> findById(String id) {
+    InMemorySession session = cache.getIfPresent(id);
+    if (session == null) {
+      return Optional.empty();
+    }
+    if (session.isExpired()) {
+      cache.invalidate(id);
+      return Optional.empty();
+    }
+    return Optional.of(session);
+  }
+
+  @Override
+  public InMemorySession save(InMemorySession session) {
+    cache.put(session.getId(), session);
+    return session;
+  }
+
+  @Override
+  public void deleteById(String id) {
+    cache.invalidate(id);
+  }
+
+  private static class SessionExpiry implements Expiry<String, InMemorySession> {
+
+    @Override
+    public long expireAfterCreate(String key, InMemorySession value, long currentTime) {
+      return toNanos(value.getMaxInactiveInterval().orElse(null));
+    }
+
+    @Override
+    public long expireAfterUpdate(String key, InMemorySession value, long currentTime,
+        long currentDuration) {
+      return toNanos(value.getMaxInactiveInterval().orElse(null));
+    }
+
+    @Override
+    public long expireAfterRead(String key, InMemorySession value, long currentTime,
+        long currentDuration) {
+      return toNanos(value.getMaxInactiveInterval().orElse(null));
+    }
+
+    private long toNanos(Duration duration) {
+      if (duration == null) {
+        return Long.MAX_VALUE;
+      }
+      if (duration.isZero() || duration.isNegative()) {
+        return 0L;
+      }
+      return duration.toNanos();
+    }
+  }
+}
