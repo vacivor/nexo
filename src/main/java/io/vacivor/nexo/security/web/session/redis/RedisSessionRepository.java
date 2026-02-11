@@ -3,6 +3,7 @@ package io.vacivor.nexo.security.web.session.redis;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micronaut.context.annotation.Requires;
+import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionRepository;
@@ -15,7 +16,7 @@ import java.util.Optional;
 
 @Singleton
 @Requires(property = "nexo.session.store", value = "redis")
-public class RedisSessionRepository implements SessionRepository<RedisSession> {
+public class RedisSessionRepository implements SessionRepository {
 
   private static final String FIELD_CREATION_TIME = "creationTime";
   private static final String FIELD_LAST_ACCESSED_TIME = "lastAccessedTime";
@@ -36,14 +37,14 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
   }
 
   @Override
-  public RedisSession createSession(String id) {
+  public Session createSession(String id) {
     RedisSession session = new RedisSession(id);
     session.setMaxInactiveInterval(configuration.getMaxInactiveInterval());
     return session;
   }
 
   @Override
-  public Optional<RedisSession> findById(String id) {
+  public Optional<Session> findById(String id) {
     Map<String, String> data = commands.hgetall(key(id));
     if (data == null || data.isEmpty()) {
       return Optional.empty();
@@ -57,13 +58,17 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
   }
 
   @Override
-  public RedisSession save(RedisSession session) {
-    commands.hset(key(session.getId()), toHash(session));
-    long ttlSeconds = toTtlSeconds(session);
-    if (ttlSeconds > 0) {
-      commands.expire(key(session.getId()), ttlSeconds);
+  public Session save(Session session) {
+    if (!(session instanceof RedisSession)) {
+      throw new IllegalArgumentException("RedisSessionRepository only supports RedisSession");
     }
-    return session;
+    RedisSession redisSession = (RedisSession) session;
+    commands.hset(key(redisSession.getId()), toHash(redisSession));
+    long ttlSeconds = toTtlSeconds(redisSession);
+    if (ttlSeconds > 0) {
+      commands.expire(key(redisSession.getId()), ttlSeconds);
+    }
+    return redisSession;
   }
 
   @Override

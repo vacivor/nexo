@@ -2,7 +2,11 @@ package io.vacivor.nexo;
 
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "tenants")
 public class TenantEntity extends BaseEntity {
 
   @Column(name = "uuid")

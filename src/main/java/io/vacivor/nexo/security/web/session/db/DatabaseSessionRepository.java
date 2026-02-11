@@ -1,6 +1,7 @@
 package io.vacivor.nexo.security.web.session.db;
 
 import io.micronaut.context.annotation.Requires;
+import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionRepository;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 @Singleton
 @Requires(property = "nexo.session.store", value = "db")
-public class DatabaseSessionRepository implements SessionRepository<DatabaseSession> {
+public class DatabaseSessionRepository implements SessionRepository {
 
   private final SessionEntityRepository entityRepository;
   private final SessionConfiguration configuration;
@@ -26,16 +27,16 @@ public class DatabaseSessionRepository implements SessionRepository<DatabaseSess
   }
 
   @Override
-  public DatabaseSession createSession(String id) {
+  public Session createSession(String id) {
     DatabaseSession session = new DatabaseSession(id);
     session.setMaxInactiveInterval(configuration.getMaxInactiveInterval());
     return session;
   }
 
   @Override
-  public Optional<DatabaseSession> findById(String id) {
+  public Optional<Session> findById(String id) {
     return entityRepository.findById(id)
-        .map(this::toSession)
+        .map(entity -> (Session) toSession(entity))
         .filter(session -> {
           if (session.isExpired()) {
             deleteById(id);
@@ -46,9 +47,13 @@ public class DatabaseSessionRepository implements SessionRepository<DatabaseSess
   }
 
   @Override
-  public DatabaseSession save(DatabaseSession session) {
-    entityRepository.save(toEntity(session));
-    return session;
+  public Session save(Session session) {
+    if (!(session instanceof DatabaseSession)) {
+      throw new IllegalArgumentException("DatabaseSessionRepository only supports DatabaseSession");
+    }
+    DatabaseSession dbSession = (DatabaseSession) session;
+    entityRepository.save(toEntity(dbSession));
+    return dbSession;
   }
 
   @Override

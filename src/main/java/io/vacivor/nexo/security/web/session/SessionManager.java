@@ -14,13 +14,13 @@ import java.util.Optional;
  */
 @Singleton
 @Requires(beans = SessionRepository.class)
-public class SessionManager<S extends Session> {
+public class SessionManager {
 
-  private final SessionRepository<S> sessionRepository;
+  private final SessionRepository sessionRepository;
   private final SessionIdGenerator sessionIdGenerator;
   private final ApplicationEventPublisher<Object> eventPublisher;
 
-  public SessionManager(SessionRepository<S> sessionRepository,
+  public SessionManager(SessionRepository sessionRepository,
       SessionIdGenerator sessionIdGenerator,
       ApplicationEventPublisher<Object> eventPublisher) {
     this.sessionRepository = sessionRepository;
@@ -28,20 +28,20 @@ public class SessionManager<S extends Session> {
     this.eventPublisher = eventPublisher;
   }
 
-  public S createSession() {
+  public Session createSession() {
     String id = sessionIdGenerator.generateId();
-    S session = sessionRepository.createSession(id);
+    Session session = sessionRepository.createSession(id);
     sessionRepository.save(session);
     eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
     return session;
   }
 
-  public Optional<S> findById(String id) {
-    Optional<S> session = sessionRepository.findById(id);
+  public Optional<Session> findById(String id) {
+    Optional<Session> session = sessionRepository.findById(id);
     if (session.isEmpty()) {
       return Optional.empty();
     }
-    S found = session.get();
+    Session found = session.get();
     if (found.isExpired()) {
       sessionRepository.delete(found);
       eventPublisher.publishEvent(new SessionExpiredEvent(this, found));
@@ -53,7 +53,7 @@ public class SessionManager<S extends Session> {
     return Optional.of(found);
   }
 
-  public void save(S session) {
+  public void save(Session session) {
     sessionRepository.save(session);
   }
 

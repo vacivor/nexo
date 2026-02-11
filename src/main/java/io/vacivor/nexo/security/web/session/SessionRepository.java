@@ -5,17 +5,17 @@ import java.util.Optional;
 /**
  * @author lumreco lumreco@gmail.com
  */
-public interface SessionRepository<S extends Session> {
+public interface SessionRepository {
 
-  S createSession(String id);
+  Session createSession(String id);
 
-  Optional<S> findById(String id);
+  Optional<Session> findById(String id);
 
-  S save(S session);
+  Session save(Session session);
 
   void deleteById(String id);
 
-  default void delete(S session) {
+  default void delete(Session session) {
     deleteById(session.getId());
   }
 }

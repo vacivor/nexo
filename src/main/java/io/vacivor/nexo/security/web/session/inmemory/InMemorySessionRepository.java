@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import io.micronaut.context.annotation.Requires;
+import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionRepository;
 import jakarta.inject.Singleton;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Singleton
 @Requires(property = "nexo.session.store", value = "inmemory")
-public class InMemorySessionRepository implements SessionRepository<InMemorySession> {
+public class InMemorySessionRepository implements SessionRepository {
 
   private final SessionConfiguration configuration;
   private final Cache<String, InMemorySession> cache;
@@ -26,14 +27,14 @@ public class InMemorySessionRepository implements SessionRepository<InMemorySess
   }
 
   @Override
-  public InMemorySession createSession(String id) {
+  public Session createSession(String id) {
     InMemorySession session = new InMemorySession(id);
     session.setMaxInactiveInterval(configuration.getMaxInactiveInterval());
     return session;
   }
 
   @Override
-  public Optional<InMemorySession> findById(String id) {
+  public Optional<Session> findById(String id) {
     InMemorySession session = cache.getIfPresent(id);
     if (session == null) {
       return Optional.empty();
@@ -46,9 +47,13 @@ public class InMemorySessionRepository implements SessionRepository<InMemorySess
   }
 
   @Override
-  public InMemorySession save(InMemorySession session) {
-    cache.put(session.getId(), session);
-    return session;
+  public Session save(Session session) {
+    if (!(session instanceof InMemorySession)) {
+      throw new IllegalArgumentException("InMemorySessionRepository only supports InMemorySession");
+    }
+    InMemorySession inMemorySession = (InMemorySession) session;
+    cache.put(inMemorySession.getId(), inMemorySession);
+    return inMemorySession;
   }
 
   @Override

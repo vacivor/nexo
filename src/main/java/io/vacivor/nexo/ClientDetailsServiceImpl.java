@@ -4,11 +4,16 @@ import jakarta.inject.Singleton;
 import java.util.Optional;
 
 @Singleton
-public class ClientService {
+public class ClientDetailsServiceImpl implements ClientDetailsService {
 
-  private ApplicationService applicationService;
+  public ClientDetailsServiceImpl(ApplicationService applicationService) {
+    this.applicationService = applicationService;
+  }
 
-  private ClientDetails loadClientByClientId(String clientId) {
+  private final ApplicationService applicationService;
+
+  @Override
+  public ClientDetails loadClientByClientId(String clientId) {
     Optional<ApplicationEntity> byClientId = applicationService.findByClientId(clientId);
     return new ClientDetails() {
       @Override

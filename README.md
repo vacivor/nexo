@@ -31,4 +31,26 @@
 
 - [Micronaut Serialization Jackson Core documentation](https://micronaut-projects.github.io/micronaut-serialization/latest/guide/)
 
+## Security Session Configuration
+
+The session and authentication flow is controlled by `nexo.session.*` config.
+
+```yaml
+nexo:
+  session:
+    store: map            # map | inmemory | redis | db
+    max-inactive-interval: 30m
+    in-memory-maximum-size: 10000
+    redis-key-prefix: "nexo:sessions:"
+    cookie-name: "NEXO_SESSION"
+    header-name: "X-Session-Id"
+    fixation-strategy: MIGRATE   # MIGRATE | NEW | NONE
+```
+
+Notes:
+- `store` selects the active session repository implementation.
+- `header-name` is used for mobile/API clients to send the session id.
+- `cookie-name` is used for browser clients.
+- `fixation-strategy` controls how session ids are handled on login.
+- Client type routing for login uses request header `X-Client-Type: mobile` to return a token in header instead of cookie.
 

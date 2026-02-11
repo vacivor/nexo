@@ -1,0 +1,42 @@
+package io.vacivor.nexo.security.auth.oidc;
+
+import io.micronaut.serde.annotation.Serdeable;
+import io.vacivor.nexo.security.auth.AuthenticationToken;
+
+@Serdeable
+public class OidcAuthenticationToken implements AuthenticationToken {
+
+  public static final String TYPE = "oidc";
+
+  private String provider;
+  private String idToken;
+
+  public OidcAuthenticationToken() {
+  }
+
+  public OidcAuthenticationToken(String provider, String idToken) {
+    this.provider = provider;
+    this.idToken = idToken;
+  }
+
+  @Override
+  public String getType() {
+    return TYPE;
+  }
+
+  public String getProvider() {
+    return provider;
+  }
+
+  public void setProvider(String provider) {
+    this.provider = provider;
+  }
+
+  public String getIdToken() {
+    return idToken;
+  }
+
+  public void setIdToken(String idToken) {
+    this.idToken = idToken;
+  }
+}
