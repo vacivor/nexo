@@ -1,4 +1,4 @@
-package io.vacivor.nexo;
+package io.vacivor.nexo.dal.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -49,11 +49,11 @@ public abstract class BaseEntity {
     this.id = id;
   }
 
-  public Boolean getDeleted() {
+  public Boolean getIsDeleted() {
     return isDeleted;
   }
 
-  public void setDeleted(Boolean deleted) {
+  public void setIsDeleted(Boolean deleted) {
     isDeleted = deleted;
   }
 

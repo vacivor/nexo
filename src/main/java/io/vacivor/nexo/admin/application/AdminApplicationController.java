@@ -8,7 +8,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.serde.annotation.Serdeable;
-import io.vacivor.nexo.ApplicationEntity;
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
 import io.vacivor.nexo.ApplicationService;
 import java.util.List;
 import java.util.Map;

@@ -1,7 +1,7 @@
 package io.vacivor.nexo.security.auth.user;
 
-import io.vacivor.nexo.security.user.UserEntity;
-import io.vacivor.nexo.security.user.UserRepository;
+import io.vacivor.nexo.dal.entity.UserEntity;
+import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.regex.Pattern;

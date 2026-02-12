@@ -3,8 +3,8 @@ package io.vacivor.nexo.security.auth;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
-import io.vacivor.nexo.security.user.UserEntity;
-import io.vacivor.nexo.security.user.UserRepository;
+import io.vacivor.nexo.dal.entity.UserEntity;
+import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 

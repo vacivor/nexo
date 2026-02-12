@@ -10,7 +10,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.serde.annotation.Serdeable;
-import io.vacivor.nexo.TenantEntity;
+import io.vacivor.nexo.dal.entity.TenantEntity;
 import io.vacivor.nexo.TenantService;
 import java.util.List;
 import java.util.Map;

@@ -14,7 +14,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.serde.annotation.Serdeable;
-import io.vacivor.nexo.security.user.UserEntity;
+import io.vacivor.nexo.dal.entity.UserEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

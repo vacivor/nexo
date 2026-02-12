@@ -1,7 +1,8 @@
-package io.vacivor.nexo.security.user;
+package io.vacivor.nexo.dal.repository;
 
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.repository.JpaRepository;
+import io.vacivor.nexo.dal.entity.UserEntity;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +15,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   Optional<UserEntity> findByEmail(String email);
 
-  List<UserEntity> findByDeletedNotTrue();
+  List<UserEntity> findByIsDeletedNotTrue();
 
-  Optional<UserEntity> findByIdAndDeletedNotTrue(Long id);
+  Optional<UserEntity> findByIdAndIsDeletedNotTrue(Long id);
 }

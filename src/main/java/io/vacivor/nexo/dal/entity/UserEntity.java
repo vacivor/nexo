@@ -1,6 +1,5 @@
-package io.vacivor.nexo.security.user;
+package io.vacivor.nexo.dal.entity;
 
-import io.vacivor.nexo.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

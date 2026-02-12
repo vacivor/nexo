@@ -14,7 +14,7 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.serde.annotation.Serdeable;
 import io.vacivor.nexo.security.auth.social.SocialProvider;
-import io.vacivor.nexo.security.providers.IdentityProviderEntity;
+import io.vacivor.nexo.dal.entity.IdentityProviderEntity;
 import io.vacivor.nexo.security.providers.IdentityProviderProtocol;
 import io.vacivor.nexo.security.providers.IdentityProviderService;
 import java.util.List;

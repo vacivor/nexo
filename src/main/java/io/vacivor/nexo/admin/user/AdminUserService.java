@@ -1,8 +1,8 @@
 package io.vacivor.nexo.admin.user;
 
 import io.vacivor.nexo.security.auth.PasswordEncoder;
-import io.vacivor.nexo.security.user.UserEntity;
-import io.vacivor.nexo.security.user.UserRepository;
+import io.vacivor.nexo.dal.entity.UserEntity;
+import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,11 +20,11 @@ public class AdminUserService {
   }
 
   public List<UserEntity> listUsers() {
-    return userRepository.findByDeletedNotTrue();
+    return userRepository.findByIsDeletedNotTrue();
   }
 
   public Optional<UserEntity> findUser(Long id) {
-    return userRepository.findByIdAndDeletedNotTrue(id);
+    return userRepository.findByIdAndIsDeletedNotTrue(id);
   }
 
   public Optional<UserEntity> createUser(String username, String email, String phone, String password) {
@@ -45,12 +45,12 @@ public class AdminUserService {
     user.setEmail(normalizedEmail);
     user.setPhone(normalizedPhone);
     user.setPassword(passwordEncoder.encode(normalizedPassword));
-    user.setDeleted(Boolean.FALSE);
+    user.setIsDeleted(Boolean.FALSE);
     return Optional.of(userRepository.save(user));
   }
 
   public Optional<UserEntity> updateUser(Long id, String username, String email, String phone) {
-    Optional<UserEntity> existing = userRepository.findByIdAndDeletedNotTrue(id);
+    Optional<UserEntity> existing = userRepository.findByIdAndIsDeletedNotTrue(id);
     if (existing.isEmpty()) {
       return Optional.empty();
     }
@@ -74,7 +74,7 @@ public class AdminUserService {
   }
 
   public Optional<UserEntity> resetPassword(Long id, String password) {
-    Optional<UserEntity> existing = userRepository.findByIdAndDeletedNotTrue(id);
+    Optional<UserEntity> existing = userRepository.findByIdAndIsDeletedNotTrue(id);
     if (existing.isEmpty()) {
       return Optional.empty();
     }
@@ -88,25 +88,25 @@ public class AdminUserService {
   }
 
   public boolean deleteUser(Long id) {
-    Optional<UserEntity> existing = userRepository.findByIdAndDeletedNotTrue(id);
+    Optional<UserEntity> existing = userRepository.findByIdAndIsDeletedNotTrue(id);
     if (existing.isEmpty()) {
       return false;
     }
     UserEntity user = existing.get();
-    user.setDeleted(Boolean.TRUE);
+    user.setIsDeleted(Boolean.TRUE);
     user.setDeletedAt(LocalDateTime.now());
     userRepository.update(user);
     return true;
   }
 
   private boolean isUniqueForCreate(String username, String email, String phone) {
-    if (userRepository.findByUsername(username).filter(u -> !Boolean.TRUE.equals(u.getDeleted())).isPresent()) {
+    if (userRepository.findByUsername(username).filter(u -> !Boolean.TRUE.equals(u.getIsDeleted())).isPresent()) {
       return false;
     }
-    if (email != null && userRepository.findByEmail(email).filter(u -> !Boolean.TRUE.equals(u.getDeleted())).isPresent()) {
+    if (email != null && userRepository.findByEmail(email).filter(u -> !Boolean.TRUE.equals(u.getIsDeleted())).isPresent()) {
       return false;
     }
-    if (phone != null && userRepository.findByPhone(phone).filter(u -> !Boolean.TRUE.equals(u.getDeleted())).isPresent()) {
+    if (phone != null && userRepository.findByPhone(phone).filter(u -> !Boolean.TRUE.equals(u.getIsDeleted())).isPresent()) {
       return false;
     }
     return true;
@@ -114,17 +114,17 @@ public class AdminUserService {
 
   private boolean isUniqueForUpdate(Long id, String username, String email, String phone) {
     if (userRepository.findByUsername(username)
-        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getDeleted()))
+        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getIsDeleted()))
         .isPresent()) {
       return false;
     }
     if (email != null && userRepository.findByEmail(email)
-        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getDeleted()))
+        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getIsDeleted()))
         .isPresent()) {
       return false;
     }
     if (phone != null && userRepository.findByPhone(phone)
-        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getDeleted()))
+        .filter(u -> !u.getId().equals(id) && !Boolean.TRUE.equals(u.getIsDeleted()))
         .isPresent()) {
       return false;
     }

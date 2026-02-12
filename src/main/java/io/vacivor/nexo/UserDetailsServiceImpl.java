@@ -2,7 +2,7 @@ package io.vacivor.nexo;
 
 import io.vacivor.nexo.security.auth.user.UserDetails;
 import io.vacivor.nexo.security.auth.user.UserDetailsService;
-import io.vacivor.nexo.security.user.UserRepository;
+import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 

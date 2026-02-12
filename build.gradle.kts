@@ -47,7 +47,6 @@ micronaut {
     testRuntime("junit5")
     processing {
         incremental(true)
-        annotations("io.vacivor.*")
     }
     aot {
         // Please review carefully the optimizations enabled below
@@ -67,4 +66,3 @@ micronaut {
 tasks.named<io.micronaut.gradle.docker.NativeImageDockerfile>("dockerfileNative") {
     jdkVersion = "25"
 }
-

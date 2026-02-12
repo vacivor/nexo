@@ -1,5 +1,6 @@
 package io.vacivor.nexo;
 
+import io.vacivor.nexo.dal.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 

@@ -1,5 +1,7 @@
 package io.vacivor.nexo.security.providers;
 
+import io.vacivor.nexo.dal.entity.IdentityProviderEntity;
+import io.vacivor.nexo.dal.repository.IdentityProviderRepository;
 import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;

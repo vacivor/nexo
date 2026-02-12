@@ -1,6 +1,6 @@
 package io.vacivor.nexo.security.oidc;
 
-import io.vacivor.nexo.ApplicationEntity;
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
 
 public class OidcClient {
 

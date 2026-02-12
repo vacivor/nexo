@@ -1,10 +1,11 @@
 package io.vacivor.nexo.security.web.session.db;
 
 import io.micronaut.context.annotation.Requires;
-import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.dal.entity.SessionEntity;
+import io.vacivor.nexo.dal.repository.SessionEntityRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Singleton
 @Requires(property = "nexo.session.store", value = "db")
-public class DatabaseSessionRepository implements SessionRepository {
+public class DatabaseSessionRepository implements SessionRepository<DatabaseSession> {
 
   private final SessionEntityRepository entityRepository;
   private final SessionConfiguration configuration;
@@ -27,16 +28,16 @@ public class DatabaseSessionRepository implements SessionRepository {
   }
 
   @Override
-  public Session createSession(String id) {
+  public DatabaseSession createSession(String id) {
     DatabaseSession session = new DatabaseSession(id);
     session.setMaxInactiveInterval(configuration.getMaxInactiveInterval());
     return session;
   }
 
   @Override
-  public Optional<Session> findById(String id) {
+  public Optional<DatabaseSession> findById(String id) {
     return entityRepository.findById(id)
-        .map(entity -> (Session) toSession(entity))
+        .map(this::toSession)
         .filter(session -> {
           if (session.isExpired()) {
             deleteById(id);
@@ -47,13 +48,9 @@ public class DatabaseSessionRepository implements SessionRepository {
   }
 
   @Override
-  public Session save(Session session) {
-    if (!(session instanceof DatabaseSession)) {
-      throw new IllegalArgumentException("DatabaseSessionRepository only supports DatabaseSession");
-    }
-    DatabaseSession dbSession = (DatabaseSession) session;
-    entityRepository.save(toEntity(dbSession));
-    return dbSession;
+  public DatabaseSession save(DatabaseSession session) {
+    entityRepository.save(toEntity(session));
+    return session;
   }
 
   @Override

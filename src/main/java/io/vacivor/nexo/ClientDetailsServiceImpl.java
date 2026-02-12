@@ -1,5 +1,8 @@
 package io.vacivor.nexo;
 
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
+import io.vacivor.nexo.security.auth.ClientDetails;
+import io.vacivor.nexo.security.auth.ClientDetailsService;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 

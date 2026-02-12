@@ -1,5 +1,7 @@
 package io.vacivor.nexo;
 
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
+import io.vacivor.nexo.dal.repository.ApplicationRepository;
 import jakarta.inject.Singleton;
 import java.security.SecureRandom;
 import java.util.Arrays;

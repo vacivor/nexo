@@ -1,4 +1,4 @@
-package io.vacivor.nexo.security.web.session.db;
+package io.vacivor.nexo.dal.entity;
 
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.persistence.Column;

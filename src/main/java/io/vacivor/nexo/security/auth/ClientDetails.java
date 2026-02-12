@@ -1,4 +1,4 @@
-package io.vacivor.nexo;
+package io.vacivor.nexo.security.auth;
 
 public interface ClientDetails {
 

@@ -1,7 +1,7 @@
 package io.vacivor.nexo.security.oidc;
 
-import io.vacivor.nexo.ApplicationEntity;
-import io.vacivor.nexo.ApplicationRepository;
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
+import io.vacivor.nexo.dal.repository.ApplicationRepository;
 import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;

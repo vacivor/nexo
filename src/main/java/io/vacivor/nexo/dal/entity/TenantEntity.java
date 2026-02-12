@@ -1,4 +1,4 @@
-package io.vacivor.nexo;
+package io.vacivor.nexo.dal.entity;
 
 
 import jakarta.persistence.Column;

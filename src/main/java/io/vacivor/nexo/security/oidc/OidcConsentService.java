@@ -2,6 +2,8 @@ package io.vacivor.nexo.security.oidc;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.cookie.Cookie;
+import io.vacivor.nexo.dal.entity.OidcConsentEntity;
+import io.vacivor.nexo.dal.repository.OidcConsentRepository;
 import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionManager;

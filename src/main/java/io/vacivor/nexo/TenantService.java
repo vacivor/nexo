@@ -1,5 +1,7 @@
 package io.vacivor.nexo;
 
+import io.vacivor.nexo.dal.entity.TenantEntity;
+import io.vacivor.nexo.dal.repository.TenantRepository;
 import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;

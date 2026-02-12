@@ -1,6 +1,6 @@
-package io.vacivor.nexo.security.providers;
+package io.vacivor.nexo.dal.entity;
 
-import io.vacivor.nexo.BaseEntity;
+import io.vacivor.nexo.security.providers.IdentityProviderProtocol;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
