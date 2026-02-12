@@ -8,6 +8,9 @@ import jakarta.persistence.Table;
 @Table(name = "applications")
 public class ApplicationEntity extends TenantBaseEntity {
 
+  @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+  private String uuid;
+
   @Column
   private String name;
   @Column
@@ -18,6 +21,14 @@ public class ApplicationEntity extends TenantBaseEntity {
   private String clientSecret;
   @Column
   private String redirectUris;
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 
   public String getName() {
     return name;

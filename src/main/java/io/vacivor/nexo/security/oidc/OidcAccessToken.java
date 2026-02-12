@@ -1,0 +1,42 @@
+package io.vacivor.nexo.security.oidc;
+
+import java.time.Instant;
+import java.util.Set;
+
+public class OidcAccessToken {
+
+  private final String token;
+  private final String subject;
+  private final String clientId;
+  private final Set<String> scopes;
+  private final Instant expiresAt;
+
+  public OidcAccessToken(String token, String subject, String clientId,
+      Set<String> scopes, Instant expiresAt) {
+    this.token = token;
+    this.subject = subject;
+    this.clientId = clientId;
+    this.scopes = scopes;
+    this.expiresAt = expiresAt;
+  }
+
+  public String getToken() {
+    return token;
+  }
+
+  public String getSubject() {
+    return subject;
+  }
+
+  public String getClientId() {
+    return clientId;
+  }
+
+  public Set<String> getScopes() {
+    return scopes;
+  }
+
+  public Instant getExpiresAt() {
+    return expiresAt;
+  }
+}

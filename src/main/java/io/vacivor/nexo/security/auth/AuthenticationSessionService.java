@@ -3,6 +3,7 @@ package io.vacivor.nexo.security.auth;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionFixationStrategy;
@@ -21,18 +22,23 @@ public class AuthenticationSessionService {
 
   private final SessionManager sessionManager;
   private final SessionConfiguration sessionConfiguration;
+  private final AuthenticationSessionCodec authenticationSessionCodec;
 
   public AuthenticationSessionService(SessionManager sessionManager,
-      SessionConfiguration sessionConfiguration) {
+      SessionConfiguration sessionConfiguration,
+      AuthenticationSessionCodec authenticationSessionCodec) {
     this.sessionManager = sessionManager;
     this.sessionConfiguration = sessionConfiguration;
+    this.authenticationSessionCodec = authenticationSessionCodec;
   }
 
   public Session authenticate(Authentication authentication, MutableHttpResponse<?> response) {
     Session session = applySessionFixation();
-    session.setAttribute(AUTH_SESSION_ATTRIBUTE, authentication);
+    session.setAttribute(AUTH_SESSION_ATTRIBUTE, authenticationSessionCodec.toSessionValue(authentication));
     sessionManager.save(session);
-    response.cookie(buildCookie(session.getId()));
+    if (sessionConfiguration.isCookieTransportEnabled()) {
+      response.cookie(buildCookie(session.getId()));
+    }
     return session;
   }
 
@@ -42,20 +48,34 @@ public class AuthenticationSessionService {
 
   public void clearSession(String sessionId, MutableHttpResponse<?> response) {
     sessionManager.deleteById(sessionId);
-    response.cookie(buildExpiredCookie());
+    if (sessionConfiguration.isCookieTransportEnabled()) {
+      response.cookie(buildExpiredCookie());
+    }
   }
 
   private Cookie buildCookie(String sessionId) {
-    return Cookie.of(sessionConfiguration.getCookieName(), sessionId)
+    Cookie cookie = Cookie.of(sessionConfiguration.getCookieName(), sessionId)
         .path("/")
-        .httpOnly(true);
+        .httpOnly(true)
+        .secure(sessionConfiguration.isCookieSecure());
+    SameSite sameSite = resolveSameSite();
+    if (sameSite != null) {
+      cookie.sameSite(sameSite);
+    }
+    return cookie;
   }
 
   private Cookie buildExpiredCookie() {
-    return Cookie.of(sessionConfiguration.getCookieName(), "")
+    Cookie cookie = Cookie.of(sessionConfiguration.getCookieName(), "")
         .path("/")
         .httpOnly(true)
+        .secure(sessionConfiguration.isCookieSecure())
         .maxAge(0);
+    SameSite sameSite = resolveSameSite();
+    if (sameSite != null) {
+      cookie.sameSite(sameSite);
+    }
+    return cookie;
   }
 
   private Session applySessionFixation() {
@@ -85,12 +105,17 @@ public class AuthenticationSessionService {
 
   private Optional<String> resolveSessionIdFromRequest() {
     return ServerRequestContext.currentRequest().flatMap(request -> {
-      String headerName = sessionConfiguration.getHeaderName();
-      if (headerName != null && !headerName.isBlank()) {
-        String headerValue = request.getHeaders().get(headerName);
-        if (headerValue != null && !headerValue.isBlank()) {
-          return Optional.of(headerValue.trim());
+      if (sessionConfiguration.isHeaderTransportEnabled()) {
+        String headerName = sessionConfiguration.getHeaderName();
+        if (headerName != null && !headerName.isBlank()) {
+          String headerValue = request.getHeaders().get(headerName);
+          if (headerValue != null && !headerValue.isBlank()) {
+            return Optional.of(headerValue.trim());
+          }
         }
+      }
+      if (!sessionConfiguration.isCookieTransportEnabled()) {
+        return Optional.empty();
       }
       Cookie cookie = request.getCookies().get(sessionConfiguration.getCookieName());
       if (cookie != null && cookie.getValue() != null && !cookie.getValue().isBlank()) {
@@ -106,6 +131,18 @@ public class AuthenticationSessionService {
         continue;
       }
       target.setAttribute(name, source.getAttribute(name));
+    }
+  }
+
+  private SameSite resolveSameSite() {
+    String configured = sessionConfiguration.getCookieSameSite();
+    if (configured == null || configured.isBlank()) {
+      return null;
+    }
+    try {
+      return SameSite.valueOf(configured.trim().toUpperCase());
+    } catch (IllegalArgumentException ignored) {
+      return null;
     }
   }
 }

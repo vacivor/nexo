@@ -9,4 +9,6 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
 
   Optional<ApplicationEntity> findByClientId(String clientId);
 
+  Optional<ApplicationEntity> findByUuid(String uuid);
+
 }

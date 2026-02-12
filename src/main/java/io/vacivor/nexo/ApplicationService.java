@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -24,15 +25,21 @@ public class ApplicationService {
     String clientSecret = randomToken(32);
     String joined = String.join(",", redirectUris);
     ApplicationEntity applicationEntity = new ApplicationEntity();
+    applicationEntity.setUuid(UUID.randomUUID().toString());
     applicationEntity.setTenantId(tenantId);
-    applicationEntity.setClientId(clientId);
+    applicationEntity.setName(name);
     applicationEntity.setClientId(clientId);
     applicationEntity.setClientSecret(clientSecret);
+    applicationEntity.setRedirectUris(joined);
     return applicationRepository.save(applicationEntity);
   }
 
   public Optional<ApplicationEntity> findByClientId(String clientId) {
     return applicationRepository.findByClientId(clientId);
+  }
+
+  public Optional<ApplicationEntity> findByUuid(String uuid) {
+    return applicationRepository.findByUuid(uuid);
   }
 
   public List<String> getRedirectUris(ApplicationEntity application) {
@@ -55,4 +62,3 @@ public class ApplicationService {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
   }
 }
-

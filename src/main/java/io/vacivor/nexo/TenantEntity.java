@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 @Table(name = "tenants")
 public class TenantEntity extends BaseEntity {
 
-  @Column(name = "uuid")
+  @Column(name = "uuid", nullable = false, unique = true, updatable = false)
   private String uuid;
   @Column(name = "name")
   private String name;

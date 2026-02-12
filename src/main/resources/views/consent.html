@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 620px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #f7f7f8;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .header {
+      margin-bottom: 1.2rem;
+    }
+    .label {
+      color: #555;
+      margin-top: 0.6rem;
+    }
+    .value {
+      color: #111;
+      font-weight: 600;
+      word-break: break-all;
+    }
+    ul {
+      padding-left: 1.2rem;
+      margin-top: 0.4rem;
+    }
+    .actions {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+    .btn {
+      padding: 0.7rem 1.2rem;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .approve {
+      background: #0b6bcb;
+      color: #fff;
+    }
+    .deny {
+      background: #6b7280;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>Authorization Request</h2>
+    <p>Review requested permissions for this client.</p>
+  </div>
+
+  <div class="label">Client</div>
+  <div class="value" th:text="${clientId}">client-id</div>
+
+  <div class="label">Scopes</div>
+  <ul>
+    <li th:each="scope : ${scopes}" th:text="${scope}">openid</li>
+  </ul>
+
+  <div class="actions">
+    <form method="post" action="/oidc/consent/approve">
+      <input type="hidden" name="request_id" th:value="${requestId}">
+      <input type="hidden" name="csrf_token" th:value="${csrfToken}">
+      <button class="btn approve" type="submit">Allow</button>
+    </form>
+
+    <form method="post" action="/oidc/consent/deny">
+      <input type="hidden" name="request_id" th:value="${requestId}">
+      <input type="hidden" name="csrf_token" th:value="${csrfToken}">
+      <button class="btn deny" type="submit">Deny</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

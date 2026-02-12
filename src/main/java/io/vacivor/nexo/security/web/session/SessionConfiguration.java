@@ -11,6 +11,10 @@ public class SessionConfiguration {
   private String redisKeyPrefix = "nexo:sessions:";
   private String cookieName = "NEXO_SESSION";
   private String headerName = "X-Session-Id";
+  private boolean cookieTransportEnabled = true;
+  private boolean headerTransportEnabled = true;
+  private boolean cookieSecure = false;
+  private String cookieSameSite = "LAX";
   private SessionFixationStrategy sessionFixationStrategy = SessionFixationStrategy.MIGRATE;
 
   public Duration getMaxInactiveInterval() {
@@ -51,6 +55,38 @@ public class SessionConfiguration {
 
   public void setHeaderName(String headerName) {
     this.headerName = headerName;
+  }
+
+  public boolean isCookieTransportEnabled() {
+    return cookieTransportEnabled;
+  }
+
+  public void setCookieTransportEnabled(boolean cookieTransportEnabled) {
+    this.cookieTransportEnabled = cookieTransportEnabled;
+  }
+
+  public boolean isHeaderTransportEnabled() {
+    return headerTransportEnabled;
+  }
+
+  public void setHeaderTransportEnabled(boolean headerTransportEnabled) {
+    this.headerTransportEnabled = headerTransportEnabled;
+  }
+
+  public boolean isCookieSecure() {
+    return cookieSecure;
+  }
+
+  public void setCookieSecure(boolean cookieSecure) {
+    this.cookieSecure = cookieSecure;
+  }
+
+  public String getCookieSameSite() {
+    return cookieSameSite;
+  }
+
+  public void setCookieSameSite(String cookieSameSite) {
+    this.cookieSameSite = cookieSameSite;
   }
 
   public SessionFixationStrategy getSessionFixationStrategy() {

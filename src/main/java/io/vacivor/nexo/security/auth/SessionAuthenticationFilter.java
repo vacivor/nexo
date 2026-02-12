@@ -17,17 +17,21 @@ public class SessionAuthenticationFilter implements HttpServerFilter {
 
   private final SessionManager sessionManager;
   private final SessionConfiguration sessionConfiguration;
+  private final AuthenticationSessionCodec authenticationSessionCodec;
 
   public SessionAuthenticationFilter(SessionManager sessionManager,
-      SessionConfiguration sessionConfiguration) {
+      SessionConfiguration sessionConfiguration,
+      AuthenticationSessionCodec authenticationSessionCodec) {
     this.sessionManager = sessionManager;
     this.sessionConfiguration = sessionConfiguration;
+    this.authenticationSessionCodec = authenticationSessionCodec;
   }
 
   @Override
   public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
     resolveSession(request).ifPresent(session -> {
-      Authentication authentication = session.getAttribute(AuthenticationSessionService.authenticationAttributeName(), Authentication.class)
+      Authentication authentication = authenticationSessionCodec
+          .fromSessionValue(session.getAttribute(AuthenticationSessionService.authenticationAttributeName()))
           .orElse(null);
       if (authentication != null) {
         SecurityContext.setAuthentication(request, authentication);
@@ -37,12 +41,17 @@ public class SessionAuthenticationFilter implements HttpServerFilter {
   }
 
   private Optional<Session> resolveSession(HttpRequest<?> request) {
-    String headerName = sessionConfiguration.getHeaderName();
-    if (headerName != null && !headerName.isBlank()) {
-      String headerValue = request.getHeaders().get(headerName);
-      if (headerValue != null && !headerValue.isBlank()) {
-        return sessionManager.findById(headerValue.trim()).map(session -> (Session) session);
+    if (sessionConfiguration.isHeaderTransportEnabled()) {
+      String headerName = sessionConfiguration.getHeaderName();
+      if (headerName != null && !headerName.isBlank()) {
+        String headerValue = request.getHeaders().get(headerName);
+        if (headerValue != null && !headerValue.isBlank()) {
+          return sessionManager.findById(headerValue.trim()).map(session -> (Session) session);
+        }
       }
+    }
+    if (!sessionConfiguration.isCookieTransportEnabled()) {
+      return Optional.empty();
     }
     Cookie cookie = request.getCookies().get(sessionConfiguration.getCookieName());
     if (cookie == null) {
