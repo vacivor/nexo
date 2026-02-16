@@ -3,7 +3,7 @@ package io.vacivor.nexo.security.auth.oidc;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.type.Argument;
 import io.micronaut.serde.ObjectMapper;
-import io.vacivor.nexo.security.oidc.OidcConfiguration;
+import io.vacivor.nexo.oidc.OidcConfiguration;
 import jakarta.inject.Singleton;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;

@@ -1,8 +1,9 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
 import io.micronaut.http.HttpRequest;
-import io.vacivor.nexo.security.oidc.store.OidcAccessTokenStore;
-import io.vacivor.nexo.security.oidc.store.OidcAuthorizationCodeStore;
+import io.vacivor.nexo.oidc.store.OidcAccessTokenStore;
+import io.vacivor.nexo.oidc.store.OidcAuthorizationCodeStore;
+import io.vacivor.nexo.oidc.store.OidcRefreshTokenStore;
 import io.vacivor.nexo.dal.entity.UserEntity;
 import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
@@ -20,7 +21,9 @@ public class OidcService {
   private final OidcClientService clientService;
   private final OidcAuthorizationCodeStore codeStore;
   private final OidcAccessTokenStore accessTokenStore;
+  private final OidcRefreshTokenStore refreshTokenStore;
   private final OidcJwtSigner jwtSigner;
+  private final OidcKeyService keyService;
   private final UserRepository userRepository;
   private final SecureRandom secureRandom = new SecureRandom();
 
@@ -28,27 +31,33 @@ public class OidcService {
       OidcClientService clientService,
       OidcAuthorizationCodeStore codeStore,
       OidcAccessTokenStore accessTokenStore,
+      OidcRefreshTokenStore refreshTokenStore,
       OidcJwtSigner jwtSigner,
+      OidcKeyService keyService,
       UserRepository userRepository) {
     this.configuration = configuration;
     this.clientService = clientService;
     this.codeStore = codeStore;
     this.accessTokenStore = accessTokenStore;
+    this.refreshTokenStore = refreshTokenStore;
     this.jwtSigner = jwtSigner;
+    this.keyService = keyService;
     this.userRepository = userRepository;
   }
 
   public Map<String, Object> discovery(HttpRequest<?> request) {
     String issuer = configuration.getIssuer();
     String baseUrl = issuer;
+    String signingAlg = configuration.getSigningAlgorithm();
     return Map.of(
         "issuer", issuer,
         "authorization_endpoint", baseUrl + "/oauth/authorize",
         "token_endpoint", baseUrl + "/oauth/token",
         "userinfo_endpoint", baseUrl + "/oauth/userinfo",
+        "jwks_uri", baseUrl + "/oauth/jwks",
         "response_types_supported", new String[] {"code"},
         "subject_types_supported", new String[] {"public"},
-        "id_token_signing_alg_values_supported", new String[] {"HS256"}
+        "id_token_signing_alg_values_supported", new String[] {signingAlg}
     );
   }
 
@@ -74,8 +83,23 @@ public class OidcService {
     return accessToken;
   }
 
+  public Optional<OidcRefreshToken> issueRefreshToken(String subject, String clientId, Set<String> scopes) {
+    if (!configuration.isRefreshTokenEnabled()) {
+      return Optional.empty();
+    }
+    String token = randomToken();
+    Instant expiresAt = Instant.now().plus(configuration.getRefreshTokenTtl());
+    OidcRefreshToken refreshToken = new OidcRefreshToken(token, subject, clientId, scopes, expiresAt);
+    refreshTokenStore.store(refreshToken);
+    return Optional.of(refreshToken);
+  }
+
   public Optional<OidcAccessToken> findAccessToken(String token) {
     return accessTokenStore.find(token).filter(t -> t.getExpiresAt().isAfter(Instant.now()));
+  }
+
+  public Optional<OidcRefreshToken> consumeRefreshToken(String token) {
+    return refreshTokenStore.consume(token).filter(t -> t.getExpiresAt().isAfter(Instant.now()));
   }
 
   public String issueIdToken(String subject, String audience, String nonce) {
@@ -83,6 +107,9 @@ public class OidcService {
     Instant exp = now.plus(configuration.getIdTokenTtl());
     Map<String, Object> claims = jwtSigner.buildIdTokenClaims(configuration.getIssuer(), subject,
         audience, now, exp, nonce);
+    if ("RS256".equalsIgnoreCase(configuration.getSigningAlgorithm())) {
+      return jwtSigner.signRs256(keyService.getPrivateKey(), keyService.getKeyId(), claims);
+    }
     return jwtSigner.signHs256(configuration.getHmacSecret(), claims);
   }
 
@@ -91,7 +118,7 @@ public class OidcService {
   }
 
   public Optional<OidcClient> resolveClient(String clientId) {
-    return clientService.findByClientId(clientId).map(client -> new OidcClient(client,
+    return clientService.findEntityByClientId(clientId).map(client -> new OidcClient(client,
         clientService));
   }
 

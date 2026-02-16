@@ -1,5 +1,7 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
+import io.vacivor.nexo.core.RegisteredClient;
+import io.vacivor.nexo.core.RegisteredClientRepository;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
 import io.vacivor.nexo.dal.repository.ApplicationRepository;
 import jakarta.inject.Singleton;
@@ -10,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class OidcClientService {
+public class OidcClientService implements RegisteredClientRepository {
 
   private final ApplicationRepository applicationRepository;
 
@@ -18,8 +20,13 @@ public class OidcClientService {
     this.applicationRepository = applicationRepository;
   }
 
-  public Optional<ApplicationEntity> findByClientId(String clientId) {
+  public Optional<ApplicationEntity> findEntityByClientId(String clientId) {
     return applicationRepository.findByClientId(clientId);
+  }
+
+  @Override
+  public Optional<RegisteredClient> findByClientId(String clientId) {
+    return findEntityByClientId(clientId).map(entity -> new OidcClient(entity, this));
   }
 
   public boolean validateSecret(ApplicationEntity client, String secret) {

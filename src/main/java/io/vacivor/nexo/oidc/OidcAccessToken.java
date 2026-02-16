@@ -1,9 +1,10 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
+import io.vacivor.nexo.core.AccessToken;
 import java.time.Instant;
 import java.util.Set;
 
-public class OidcAccessToken {
+public class OidcAccessToken implements AccessToken {
 
   private final String token;
   private final String subject;

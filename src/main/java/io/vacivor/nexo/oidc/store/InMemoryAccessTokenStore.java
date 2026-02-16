@@ -1,9 +1,9 @@
-package io.vacivor.nexo.security.oidc.store;
+package io.vacivor.nexo.oidc.store;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.vacivor.nexo.security.oidc.OidcAccessToken;
-import io.vacivor.nexo.security.oidc.OidcConfiguration;
+import io.vacivor.nexo.oidc.OidcAccessToken;
+import io.vacivor.nexo.oidc.OidcConfiguration;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 

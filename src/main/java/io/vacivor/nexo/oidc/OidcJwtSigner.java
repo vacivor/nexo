@@ -1,4 +1,4 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.security.PrivateKey;
+import java.security.Signature;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -32,6 +34,27 @@ public class OidcJwtSigner {
       String payloadPart = URL_ENCODER.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
       String signingInput = headerPart + "." + payloadPart;
       byte[] signature = hmacSha256(secret, signingInput);
+      String signaturePart = URL_ENCODER.encodeToString(signature);
+      return signingInput + "." + signaturePart;
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to sign JWT", e);
+    }
+  }
+
+  public String signRs256(PrivateKey privateKey, String keyId, Map<String, Object> claims) {
+    try {
+      Map<String, Object> header = new LinkedHashMap<>();
+      header.put("alg", "RS256");
+      header.put("typ", "JWT");
+      if (keyId != null && !keyId.isBlank()) {
+        header.put("kid", keyId);
+      }
+      String headerJson = objectMapper.writeValueAsString(header);
+      String payloadJson = objectMapper.writeValueAsString(claims);
+      String headerPart = URL_ENCODER.encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+      String payloadPart = URL_ENCODER.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+      String signingInput = headerPart + "." + payloadPart;
+      byte[] signature = rsaSha256(privateKey, signingInput);
       String signaturePart = URL_ENCODER.encodeToString(signature);
       return signingInput + "." + signaturePart;
     } catch (Exception e) {
@@ -67,5 +90,12 @@ public class OidcJwtSigner {
     Mac mac = Mac.getInstance("HmacSHA256");
     mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
     return mac.doFinal(content.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private byte[] rsaSha256(PrivateKey privateKey, String content) throws Exception {
+    Signature signature = Signature.getInstance("SHA256withRSA");
+    signature.initSign(privateKey);
+    signature.update(content.getBytes(StandardCharsets.UTF_8));
+    return signature.sign();
   }
 }

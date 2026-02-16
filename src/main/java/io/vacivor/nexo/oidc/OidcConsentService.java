@@ -1,7 +1,8 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.cookie.Cookie;
+import io.vacivor.nexo.core.ConsentService;
 import io.vacivor.nexo.dal.entity.OidcConsentEntity;
 import io.vacivor.nexo.dal.repository.OidcConsentRepository;
 import io.vacivor.nexo.security.web.session.Session;
@@ -18,7 +19,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Singleton
-public class OidcConsentService {
+public class OidcConsentService implements ConsentService {
 
   private static final String CONSENT_PREFIX = "OIDC_CONSENT:";
 

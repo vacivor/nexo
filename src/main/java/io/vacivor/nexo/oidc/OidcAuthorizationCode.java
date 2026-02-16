@@ -1,9 +1,10 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
+import io.vacivor.nexo.core.AuthorizationCode;
 import java.time.Instant;
 import java.util.Set;
 
-public class OidcAuthorizationCode {
+public class OidcAuthorizationCode implements AuthorizationCode {
 
   private final String code;
   private final String clientId;

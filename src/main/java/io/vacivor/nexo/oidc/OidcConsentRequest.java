@@ -1,4 +1,4 @@
-package io.vacivor.nexo.security.oidc;
+package io.vacivor.nexo.oidc;
 
 import java.util.Set;
 
