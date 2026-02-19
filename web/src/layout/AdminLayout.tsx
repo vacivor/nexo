@@ -1,5 +1,13 @@
-import { Avatar, Layout, Nav, Breadcrumb, Button } from '@douyinfe/semi-ui-19'
-import { IconBell, IconHelpCircle } from '@douyinfe/semi-icons'
+import { Avatar, Layout, Nav, Breadcrumb, Button, Tooltip } from '@douyinfe/semi-ui-19'
+import {
+  IconAppCenter,
+  IconApartment,
+  IconBell,
+  IconHelpCircle,
+  IconLink,
+  IconSidebar,
+  IconUserGroup,
+} from '@douyinfe/semi-icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
@@ -13,12 +21,12 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
   const navigate = useNavigate()
   const navItems = useMemo(() => {
     const items = [
-      { itemKey: `${basePath}/users`, text: 'Users' },
-      { itemKey: `${basePath}/applications`, text: 'Applications' },
-      { itemKey: `${basePath}/providers`, text: 'Providers' },
+      { itemKey: `${basePath}/users`, text: 'Users', icon: <IconUserGroup /> },
+      { itemKey: `${basePath}/applications`, text: 'Applications', icon: <IconAppCenter /> },
+      { itemKey: `${basePath}/providers`, text: 'Providers', icon: <IconLink /> },
     ]
     if (basePath === '/platform' || basePath === '/admin') {
-      items.splice(1, 0, { itemKey: `${basePath}/tenants`, text: 'Tenants' })
+      items.splice(1, 0, { itemKey: `${basePath}/tenants`, text: 'Tenants', icon: <IconApartment /> })
     }
     return items
   }, [basePath])
@@ -132,7 +140,20 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
             isCollapsed={collapsed}
             onCollapseChange={setCollapsed}
             onSelect={({ itemKey }) => navigate(String(itemKey))}
-            footer={{ collapseButton: true }}
+            footer={{
+              collapseButton: (
+                <Tooltip content={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} position="right">
+                  <span>
+                    <Button
+                      icon={<IconSidebar />}
+                      type="tertiary"
+                      theme="borderless"
+                      onClick={() => setCollapsed(!collapsed)}
+                    />
+                  </span>
+                </Tooltip>
+              ),
+            }}
           />
         </Layout.Sider>
         <Layout.Content

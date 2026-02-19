@@ -30,6 +30,10 @@ export async function listUsers(): Promise<User[]> {
   return (await callApi<User[]>(apiPath('/users'), 'GET')) ?? []
 }
 
+export async function getUser(userId: string): Promise<User | undefined> {
+  return callApi<User>(apiPath(`/users/${userId}`), 'GET')
+}
+
 export async function createUser(input: {
   username: string
   email?: string
@@ -59,8 +63,16 @@ export async function listTenants(): Promise<Tenant[]> {
   return (await callApi<Tenant[]>(apiPath('/tenants'), 'GET')) ?? []
 }
 
+export async function getTenant(uuid: string): Promise<Tenant | undefined> {
+  return callApi<Tenant>(apiPath(`/tenants/${uuid}`), 'GET')
+}
+
 export async function createTenant(name: string): Promise<void> {
   await callApi(apiPath('/tenants'), 'POST', { name })
+}
+
+export async function updateTenant(uuid: string, name: string): Promise<void> {
+  await callApi(apiPath(`/tenants/${uuid}`), 'PUT', { name })
 }
 
 export async function createApplication(input: {
@@ -99,6 +111,10 @@ export async function listProviders(): Promise<IdentityProvider[]> {
   return (await callApi<IdentityProvider[]>(apiPath('/providers'), 'GET')) ?? []
 }
 
+export async function getProvider(uuid: string): Promise<IdentityProvider | undefined> {
+  return callApi<IdentityProvider>(apiPath(`/providers/${uuid}`), 'GET')
+}
+
 export async function createProvider(input: {
   protocol: IdentityProviderProtocol
   provider: string
@@ -116,6 +132,25 @@ export async function createProvider(input: {
   extraConfig?: string
 }): Promise<void> {
   await callApi(apiPath('/providers'), 'POST', input)
+}
+
+export async function updateProvider(uuid: string, input: {
+  protocol: IdentityProviderProtocol
+  provider: string
+  displayName?: string
+  enabled: boolean
+  clientId?: string
+  clientSecret?: string
+  authorizationUri?: string
+  tokenUri?: string
+  userInfoUri?: string
+  issuer?: string
+  jwksUri?: string
+  redirectUri?: string
+  scopes?: string
+  extraConfig?: string
+}): Promise<void> {
+  await callApi(apiPath(`/providers/${uuid}`), 'PUT', input)
 }
 
 export async function setProviderEnabled(uuid: string, enabled: boolean): Promise<void> {

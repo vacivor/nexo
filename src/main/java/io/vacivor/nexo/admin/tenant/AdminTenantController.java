@@ -9,6 +9,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.annotation.Put;
 import io.micronaut.serde.annotation.Serdeable;
 import io.vacivor.nexo.dal.entity.TenantEntity;
 import io.vacivor.nexo.TenantService;
@@ -52,6 +53,17 @@ public class AdminTenantController {
         .orElseGet(HttpResponse::notFound);
   }
 
+  @Put("/{uuid}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public HttpResponse<?> updateTenant(@PathVariable String uuid, @Body UpdateTenantRequest request) {
+    if (request == null || request.name() == null || request.name().isBlank()) {
+      return HttpResponse.badRequest(Map.of("error", "invalid_request"));
+    }
+    return tenantService.updateTenant(uuid, request.name().trim())
+        .<HttpResponse<?>>map(tenant -> HttpResponse.ok(toResponse(tenant)))
+        .orElseGet(HttpResponse::notFound);
+  }
+
   private TenantResponse toResponse(TenantEntity entity) {
     return new TenantResponse(entity.getId(), entity.getUuid(), entity.getName());
   }
@@ -59,6 +71,11 @@ public class AdminTenantController {
   @Introspected
   @Serdeable.Deserializable
   public record CreateTenantRequest(String name) {
+  }
+
+  @Introspected
+  @Serdeable.Deserializable
+  public record UpdateTenantRequest(String name) {
   }
 
   @Introspected

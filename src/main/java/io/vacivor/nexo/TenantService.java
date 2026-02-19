@@ -30,4 +30,11 @@ public class TenantService {
   public List<TenantEntity> findAll() {
     return tenantRepository.findAll();
   }
+
+  public Optional<TenantEntity> updateTenant(String uuid, String name) {
+    return tenantRepository.findByUuid(uuid).map(existing -> {
+      existing.setName(name);
+      return tenantRepository.update(existing);
+    });
+  }
 }

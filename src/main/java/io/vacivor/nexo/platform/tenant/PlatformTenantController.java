@@ -8,6 +8,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.annotation.Put;
 import io.vacivor.nexo.admin.tenant.AdminTenantController;
 import java.util.List;
 
@@ -36,5 +37,13 @@ public class PlatformTenantController {
   @Produces(MediaType.APPLICATION_JSON)
   public HttpResponse<?> getTenantByUuid(@PathVariable String uuid) {
     return delegate.getTenantByUuid(uuid);
+  }
+
+  @Put("/{uuid}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public HttpResponse<?> updateTenant(
+      @PathVariable String uuid,
+      @Body AdminTenantController.UpdateTenantRequest request) {
+    return delegate.updateTenant(uuid, request);
   }
 }
