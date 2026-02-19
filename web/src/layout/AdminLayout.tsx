@@ -1,19 +1,27 @@
-import { Avatar, Banner, Layout, Nav, Breadcrumb, Button } from '@douyinfe/semi-ui-19'
+import { Avatar, Layout, Nav, Breadcrumb, Button } from '@douyinfe/semi-ui-19'
 import { IconBell, IconHelpCircle } from '@douyinfe/semi-icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { SESSION_HEADER } from '../api/http'
 
-const navItems = [
-  { itemKey: '/admin/users', text: 'Users' },
-  { itemKey: '/admin/tenants', text: 'Tenants' },
-  { itemKey: '/admin/applications', text: 'Applications' },
-  { itemKey: '/admin/providers', text: 'Providers' },
-] as const
+type AdminLayoutProps = {
+  basePath?: '/admin' | '/platform' | '/tenant'
+  title?: string
+}
 
-export function AdminLayout() {
+export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const navItems = useMemo(() => {
+    const items = [
+      { itemKey: `${basePath}/users`, text: 'Users' },
+      { itemKey: `${basePath}/applications`, text: 'Applications' },
+      { itemKey: `${basePath}/providers`, text: 'Providers' },
+    ]
+    if (basePath === '/platform' || basePath === '/admin') {
+      items.splice(1, 0, { itemKey: `${basePath}/tenants`, text: 'Tenants' })
+    }
+    return items
+  }, [basePath])
 
   const navRoutes = navItems.map((item) => ({
     itemKey: item.itemKey,
@@ -22,16 +30,16 @@ export function AdminLayout() {
   }))
 
   const selectedKey = useMemo(() => {
-    const pathname = location.pathname === '/admin' ? '/admin/users' : location.pathname
+    const pathname = location.pathname === basePath ? `${basePath}/users` : location.pathname
     const sorted = [...navRoutes].sort((a, b) => b.path.length - a.path.length)
     const match = sorted.find((r) => pathname === r.path || pathname.startsWith(`${r.path}/`))
-    return match?.itemKey ?? '/admin/users'
-  }, [location.pathname, navRoutes])
+    return match?.itemKey ?? `${basePath}/users`
+  }, [basePath, location.pathname, navRoutes])
 
   const crumbs = useMemo(() => {
-    const pathname = location.pathname === '/admin' ? '/admin/users' : location.pathname
+    const pathname = location.pathname === basePath ? `${basePath}/users` : location.pathname
     const list: { name: string; path?: string }[] = [
-      { name: 'Admin', path: '/admin/users' },
+      { name: title, path: `${basePath}/users` },
     ]
     const parent = navRoutes
       .sort((a, b) => b.path.length - a.path.length)
@@ -44,7 +52,7 @@ export function AdminLayout() {
       list.push({ name: 'Details' })
     }
     return list
-  }, [location.pathname, navRoutes])
+  }, [basePath, location.pathname, navRoutes, title])
 
   const [collapsed, setCollapsed] = useState(false)
 
@@ -71,9 +79,9 @@ export function AdminLayout() {
         <Nav mode="horizontal" defaultSelectedKeys={['Admin']}>
           <Nav.Header>
             <div
-              onClick={() => navigate('/admin/users')}
+              onClick={() => navigate(`${basePath}/users`)}
               role="button"
-              aria-label="Nexo Admin"
+              aria-label={`Nexo ${title}`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -87,7 +95,7 @@ export function AdminLayout() {
                 color: 'var(--semi-color-text-0)',
               }}
             >
-              NEXO Console
+              {`NEXO ${title}`}
             </div>
           </Nav.Header>
           <Nav.Footer>
@@ -149,25 +157,7 @@ export function AdminLayout() {
               )
             })}
           </Breadcrumb>
-          <div
-            style={{
-              borderRadius: '10px',
-              border: '1px solid var(--semi-color-border)',
-              padding: '24px',
-              minHeight: '376px',
-              overflow: 'auto',
-            }}
-          >
-            <Banner
-              type="info"
-              title="Session Transport"
-              description={`Current ${SESSION_HEADER}: ${localStorage.getItem('nexoSessionId') ?? '(none)'}`}
-              closeIcon={null}
-            />
-            <div style={{ marginTop: 16 }}>
-              <Outlet />
-            </div>
-          </div>
+          <Outlet />
         </Layout.Content>
       </Layout>
     </Layout>

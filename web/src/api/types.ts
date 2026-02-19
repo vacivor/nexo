@@ -19,9 +19,14 @@ export type Tenant = {
 export type Application = {
   id: number
   uuid: string
+  tenantId?: string
+  clientType?: string
   clientId: string
   clientSecret: string
   name: string
+  description?: string
+  idTokenExpiration?: number
+  refreshTokenExpiration?: number
   redirectUris: string[]
 }
 

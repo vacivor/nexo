@@ -4,9 +4,16 @@ import io.vacivor.nexo.TenantBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "applications")
+@Table(
+    name = "applications",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_applications_client_id_deleted_at",
+            columnNames = {"client_id", "deleted_at"})
+    })
 public class ApplicationEntity extends TenantBaseEntity {
 
   @Column(name = "uuid", nullable = false, unique = true, updatable = false)
@@ -16,12 +23,18 @@ public class ApplicationEntity extends TenantBaseEntity {
   private String name;
   @Column
   private String description;
-  @Column
+  @Column(name = "client_type")
+  private String clientType;
+  @Column(name = "client_id")
   private String clientId;
   @Column
   private String clientSecret;
   @Column
   private String redirectUris;
+  @Column(name = "id_token_expiration")
+  private Integer idTokenExpiration;
+  @Column(name = "refresh_token_expiration")
+  private Integer refreshTokenExpiration;
 
   public String getUuid() {
     return uuid;
@@ -47,6 +60,14 @@ public class ApplicationEntity extends TenantBaseEntity {
     this.description = description;
   }
 
+  public String getClientType() {
+    return clientType;
+  }
+
+  public void setClientType(String clientType) {
+    this.clientType = clientType;
+  }
+
   public String getClientId() {
     return clientId;
   }
@@ -69,5 +90,21 @@ public class ApplicationEntity extends TenantBaseEntity {
 
   public void setRedirectUris(String redirectUris) {
     this.redirectUris = redirectUris;
+  }
+
+  public Integer getIdTokenExpiration() {
+    return idTokenExpiration;
+  }
+
+  public void setIdTokenExpiration(Integer idTokenExpiration) {
+    this.idTokenExpiration = idTokenExpiration;
+  }
+
+  public Integer getRefreshTokenExpiration() {
+    return refreshTokenExpiration;
+  }
+
+  public void setRefreshTokenExpiration(Integer refreshTokenExpiration) {
+    this.refreshTokenExpiration = refreshTokenExpiration;
   }
 }

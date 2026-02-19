@@ -1,6 +1,7 @@
 package io.vacivor.nexo.oidc;
 
 import io.micronaut.http.HttpRequest;
+import io.vacivor.nexo.dal.entity.ApplicationEntity;
 import io.vacivor.nexo.oidc.store.OidcAccessTokenStore;
 import io.vacivor.nexo.oidc.store.OidcAuthorizationCodeStore;
 import io.vacivor.nexo.oidc.store.OidcRefreshTokenStore;
@@ -8,6 +9,7 @@ import io.vacivor.nexo.dal.entity.UserEntity;
 import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
@@ -88,7 +90,7 @@ public class OidcService {
       return Optional.empty();
     }
     String token = randomToken();
-    Instant expiresAt = Instant.now().plus(configuration.getRefreshTokenTtl());
+    Instant expiresAt = Instant.now().plus(resolveRefreshTokenTtl(clientId));
     OidcRefreshToken refreshToken = new OidcRefreshToken(token, subject, clientId, scopes, expiresAt);
     refreshTokenStore.store(refreshToken);
     return Optional.of(refreshToken);
@@ -104,7 +106,7 @@ public class OidcService {
 
   public String issueIdToken(String subject, String audience, String nonce) {
     Instant now = Instant.now();
-    Instant exp = now.plus(configuration.getIdTokenTtl());
+    Instant exp = now.plus(resolveIdTokenTtl(audience));
     Map<String, Object> claims = jwtSigner.buildIdTokenClaims(configuration.getIssuer(), subject,
         audience, now, exp, nonce);
     if ("RS256".equalsIgnoreCase(configuration.getSigningAlgorithm())) {
@@ -126,5 +128,28 @@ public class OidcService {
     byte[] bytes = new byte[32];
     secureRandom.nextBytes(bytes);
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  private Duration resolveIdTokenTtl(String clientId) {
+    return resolveClientEntity(clientId)
+        .map(ApplicationEntity::getIdTokenExpiration)
+        .filter(value -> value != null && value > 0)
+        .map(Duration::ofSeconds)
+        .orElse(configuration.getIdTokenTtl());
+  }
+
+  private Duration resolveRefreshTokenTtl(String clientId) {
+    return resolveClientEntity(clientId)
+        .map(ApplicationEntity::getRefreshTokenExpiration)
+        .filter(value -> value != null && value > 0)
+        .map(Duration::ofSeconds)
+        .orElse(configuration.getRefreshTokenTtl());
+  }
+
+  private Optional<ApplicationEntity> resolveClientEntity(String clientId) {
+    if (clientId == null || clientId.isBlank()) {
+      return Optional.empty();
+    }
+    return clientService.findEntityByClientId(clientId);
   }
 }
