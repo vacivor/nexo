@@ -11,14 +11,21 @@ public class OidcAccessToken implements AccessToken {
   private final String clientId;
   private final Set<String> scopes;
   private final Instant expiresAt;
+  private final String familyId;
 
   public OidcAccessToken(String token, String subject, String clientId,
       Set<String> scopes, Instant expiresAt) {
+    this(token, subject, clientId, scopes, expiresAt, null);
+  }
+
+  public OidcAccessToken(String token, String subject, String clientId,
+      Set<String> scopes, Instant expiresAt, String familyId) {
     this.token = token;
     this.subject = subject;
     this.clientId = clientId;
     this.scopes = scopes;
     this.expiresAt = expiresAt;
+    this.familyId = familyId;
   }
 
   public String getToken() {
@@ -39,5 +46,9 @@ public class OidcAccessToken implements AccessToken {
 
   public Instant getExpiresAt() {
     return expiresAt;
+  }
+
+  public String getFamilyId() {
+    return familyId;
   }
 }

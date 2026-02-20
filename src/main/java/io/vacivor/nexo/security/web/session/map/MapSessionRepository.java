@@ -1,8 +1,8 @@
 package io.vacivor.nexo.security.web.session.map;
 
 import io.micronaut.context.annotation.Requires;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.security.core.session.SessionSettings;
+import io.vacivor.nexo.security.core.session.SessionRepository;
 import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MapSessionRepository implements SessionRepository<MapSession> {
 
   private final Map<String, MapSession> sessions = new ConcurrentHashMap<>();
-  private final SessionConfiguration configuration;
+  private final SessionSettings configuration;
 
-  public MapSessionRepository(SessionConfiguration configuration) {
+  public MapSessionRepository(SessionSettings configuration) {
     this.configuration = configuration;
   }
 

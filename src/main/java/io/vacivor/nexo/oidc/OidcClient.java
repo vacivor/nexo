@@ -1,12 +1,12 @@
 package io.vacivor.nexo.oidc;
 
-import io.vacivor.nexo.core.RegisteredClient;
+import io.vacivor.nexo.core.ClientDetails;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OidcClient implements RegisteredClient {
+public class OidcClient implements ClientDetails {
 
   private final ApplicationEntity entity;
   private final OidcClientService clientService;

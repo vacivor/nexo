@@ -7,11 +7,12 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.uri.UriBuilder;
+import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
+import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
-import io.vacivor.nexo.oidc.OidcService;
-import io.vacivor.nexo.security.auth.Authentication;
-import io.vacivor.nexo.security.auth.AuthenticationContext;
+import io.vacivor.nexo.security.auth.core.Authentication;
+import io.vacivor.nexo.security.auth.core.AuthenticationContext;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,12 +24,15 @@ import java.util.Set;
 @Requires(property = "nexo.oauth2.enabled", value = "true", defaultValue = "false")
 public class OAuth2AuthorizationEndpoint {
 
-  private final OidcService oidcService;
+  private final AuthorizationClientService authorizationClientService;
+  private final AuthorizationService authorizationService;
   private final AuthenticationContext authenticationContext;
 
-  public OAuth2AuthorizationEndpoint(OidcService oidcService,
+  public OAuth2AuthorizationEndpoint(AuthorizationClientService authorizationClientService,
+      AuthorizationService authorizationService,
       AuthenticationContext authenticationContext) {
-    this.oidcService = oidcService;
+    this.authorizationClientService = authorizationClientService;
+    this.authorizationService = authorizationService;
     this.authenticationContext = authenticationContext;
   }
 
@@ -42,7 +46,7 @@ public class OAuth2AuthorizationEndpoint {
     if (!"code".equals(responseType)) {
       return HttpResponse.badRequest();
     }
-    Optional<OidcClient> client = oidcService.resolveClient(clientId);
+    Optional<OidcClient> client = authorizationClientService.resolveClient(clientId);
     if (client.isEmpty() || !client.get().isRedirectUriAllowed(redirectUri)) {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
@@ -51,11 +55,11 @@ public class OAuth2AuthorizationEndpoint {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
-    if (!oidcService.isUserTenantAllowedForClient(subject, clientId)) {
+    if (!authorizationService.isUserTenantAllowedForClient(subject, clientId)) {
       return errorRedirect(redirectUri, "access_denied", state, "tenant_mismatch");
     }
     Set<String> scopes = parseScopes(scope);
-    OidcAuthorizationCode code = oidcService.issueAuthorizationCode(clientId, redirectUri, subject,
+    OidcAuthorizationCode code = authorizationService.issueAuthorizationCode(clientId, redirectUri, subject,
         scopes, nonce.isBlank() ? null : nonce);
     URI location = UriBuilder.of(redirectUri)
         .queryParam("code", code.getCode())

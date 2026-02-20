@@ -3,7 +3,7 @@ package io.vacivor.nexo.security.csrf;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
-import io.vacivor.nexo.security.web.session.Session;
+import io.vacivor.nexo.security.core.session.Session;
 import jakarta.inject.Singleton;
 
 @Singleton

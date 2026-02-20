@@ -2,8 +2,8 @@ package io.vacivor.nexo.security.web.session.db;
 
 import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.security.core.session.SessionSettings;
+import io.vacivor.nexo.security.core.session.SessionRepository;
 import io.vacivor.nexo.dal.entity.SessionEntity;
 import io.vacivor.nexo.dal.repository.SessionEntityRepository;
 import jakarta.inject.Singleton;
@@ -19,11 +19,11 @@ import java.util.Optional;
 public class DatabaseSessionRepository implements SessionRepository<DatabaseSession> {
 
   private final SessionEntityRepository entityRepository;
-  private final SessionConfiguration configuration;
+  private final SessionSettings configuration;
   private final SessionAttributesCodec attributesCodec;
 
   public DatabaseSessionRepository(SessionEntityRepository entityRepository,
-      SessionConfiguration configuration,
+      SessionSettings configuration,
       SessionAttributesCodec attributesCodec) {
     this.entityRepository = entityRepository;
     this.configuration = configuration;

@@ -1,7 +1,7 @@
 package io.vacivor.nexo.oidc;
 
-import io.vacivor.nexo.core.RegisteredClient;
-import io.vacivor.nexo.core.RegisteredClientRepository;
+import io.vacivor.nexo.core.ClientDetails;
+import io.vacivor.nexo.core.ClientDetailsService;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
 import io.vacivor.nexo.dal.repository.ApplicationRepository;
 import jakarta.inject.Singleton;
@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class OidcClientService implements RegisteredClientRepository {
+public class OidcClientService implements ClientDetailsService {
 
   private final ApplicationRepository applicationRepository;
 
@@ -25,7 +25,7 @@ public class OidcClientService implements RegisteredClientRepository {
   }
 
   @Override
-  public Optional<RegisteredClient> findByClientId(String clientId) {
+  public Optional<ClientDetails> findByClientId(String clientId) {
     return findEntityByClientId(clientId).map(entity -> new OidcClient(entity, this));
   }
 

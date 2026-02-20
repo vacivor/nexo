@@ -7,8 +7,8 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.security.core.session.RedisSessionSettings;
+import io.vacivor.nexo.security.core.session.SessionRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,12 +35,12 @@ public class RedisClusterSessionRepository implements SessionRepository<RedisSes
   private static final Duration SESSION_GRACE_PERIOD = Duration.ofMinutes(5);
 
   private final RedisAdvancedClusterCommands<String, String> commands;
-  private final SessionConfiguration configuration;
+  private final RedisSessionSettings configuration;
   private final SessionAttributesCodec attributesCodec;
   private final RedisSessionLocalCache localCache;
 
   public RedisClusterSessionRepository(StatefulRedisClusterConnection<String, String> connection,
-      SessionConfiguration configuration,
+      RedisSessionSettings configuration,
       SessionAttributesCodec attributesCodec,
       RedisSessionLocalCache localCache) {
     this.commands = connection.sync();
@@ -58,6 +58,9 @@ public class RedisClusterSessionRepository implements SessionRepository<RedisSes
 
   @Override
   public Optional<RedisSession> findById(String id) {
+    if (!isSessionIdCandidate(id)) {
+      return Optional.empty();
+    }
     Optional<RedisSession> cached = localCache.get(id);
     if (cached.isPresent()) {
       RedisSession session = cached.get();
@@ -154,7 +157,7 @@ public class RedisClusterSessionRepository implements SessionRepository<RedisSes
         continue;
       }
       for (String key : keys) {
-        if (key == null || !key.startsWith(prefix)) {
+        if (!isSessionDataKey(key, prefix)) {
           continue;
         }
         String id = key.substring(prefix.length());
@@ -200,7 +203,7 @@ public class RedisClusterSessionRepository implements SessionRepository<RedisSes
         continue;
       }
       for (String key : keys) {
-        if (key == null || !key.startsWith(prefix)) {
+        if (!isSessionDataKey(key, prefix)) {
           continue;
         }
         String id = key.substring(prefix.length());
@@ -295,5 +298,20 @@ public class RedisClusterSessionRepository implements SessionRepository<RedisSes
   private Long toBucketEpochMinute(RedisSession session, long ttlSeconds) {
     Instant expiresAt = session.getLastAccessedTime().plusSeconds(ttlSeconds);
     return expiresAt.truncatedTo(ChronoUnit.MINUTES).getEpochSecond() / 60;
+  }
+
+  private boolean isSessionDataKey(String key, String prefix) {
+    if (key == null || !key.startsWith(prefix)) {
+      return false;
+    }
+    String suffix = key.substring(prefix.length());
+    return isSessionIdCandidate(suffix);
+  }
+
+  private boolean isSessionIdCandidate(String id) {
+    if (id == null || id.isBlank()) {
+      return false;
+    }
+    return !id.startsWith("expires:") && !id.startsWith("expirations:");
   }
 }

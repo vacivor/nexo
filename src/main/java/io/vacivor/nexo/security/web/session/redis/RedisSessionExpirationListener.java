@@ -6,11 +6,11 @@ import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.events.SessionCreatedEvent;
-import io.vacivor.nexo.security.web.session.events.SessionDeletedEvent;
-import io.vacivor.nexo.security.web.session.events.SessionDestroyedEvent;
-import io.vacivor.nexo.security.web.session.events.SessionExpiredEvent;
+import io.vacivor.nexo.security.core.session.RedisSessionSettings;
+import io.vacivor.nexo.security.core.session.events.SessionCreatedEvent;
+import io.vacivor.nexo.security.core.session.events.SessionDeletedEvent;
+import io.vacivor.nexo.security.core.session.events.SessionDestroyedEvent;
+import io.vacivor.nexo.security.core.session.events.SessionExpiredEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
@@ -27,14 +27,14 @@ public class RedisSessionExpirationListener {
   private static final String KEYSPACE_PREFIX = "__keyspace@";
 
   private final RedisClient redisClient;
-  private final SessionConfiguration sessionConfiguration;
+  private final RedisSessionSettings sessionConfiguration;
   private final ApplicationEventPublisher<Object> eventPublisher;
   private final RedisSessionLocalCache localCache;
 
   private StatefulRedisPubSubConnection<String, String> pubSubConnection;
 
   public RedisSessionExpirationListener(RedisClient redisClient,
-      SessionConfiguration sessionConfiguration,
+      RedisSessionSettings sessionConfiguration,
       ApplicationEventPublisher<Object> eventPublisher,
       RedisSessionLocalCache localCache) {
     this.redisClient = redisClient;

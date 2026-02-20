@@ -7,10 +7,13 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
+import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
+import io.vacivor.nexo.authorizationserver.oidc.OidcIdTokenService;
+import io.vacivor.nexo.authorizationserver.oidc.OidcTokenService;
 import io.vacivor.nexo.oidc.OidcAccessToken;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
-import io.vacivor.nexo.oidc.OidcService;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
@@ -20,10 +23,19 @@ import java.util.Optional;
 @Controller
 public class OidcTokenEndpoint {
 
-  private final OidcService oidcService;
+  private final AuthorizationClientService authorizationClientService;
+  private final AuthorizationService authorizationService;
+  private final OidcTokenService tokenService;
+  private final OidcIdTokenService oidcIdTokenService;
 
-  public OidcTokenEndpoint(OidcService oidcService) {
-    this.oidcService = oidcService;
+  public OidcTokenEndpoint(AuthorizationClientService authorizationClientService,
+      AuthorizationService authorizationService,
+      OidcTokenService tokenService,
+      OidcIdTokenService oidcIdTokenService) {
+    this.authorizationClientService = authorizationClientService;
+    this.authorizationService = authorizationService;
+    this.tokenService = tokenService;
+    this.oidcIdTokenService = oidcIdTokenService;
   }
 
   @Post(value = "/oidc/token", consumes = MediaType.APPLICATION_FORM_URLENCODED, produces = MediaType.APPLICATION_JSON)
@@ -44,12 +56,12 @@ public class OidcTokenEndpoint {
     if (code == null || clientId == null || redirectUri == null) {
       return oauthError(HttpStatus.BAD_REQUEST, "invalid_request");
     }
-    Optional<OidcClient> client = oidcService.resolveClient(clientId);
+    Optional<OidcClient> client = authorizationClientService.resolveClient(clientId);
     if (client.isEmpty() || !client.get().verifySecret(clientSecret)
         || !client.get().isRedirectUriAllowed(redirectUri)) {
       return oauthError(HttpStatus.UNAUTHORIZED, "invalid_client");
     }
-    Optional<OidcAuthorizationCode> stored = oidcService.consumeCode(code);
+    Optional<OidcAuthorizationCode> stored = authorizationService.consumeCode(code);
     if (stored.isEmpty()) {
       return oauthError(HttpStatus.BAD_REQUEST, "invalid_grant");
     }
@@ -57,9 +69,9 @@ public class OidcTokenEndpoint {
     if (!clientId.equals(authCode.getClientId()) || !redirectUri.equals(authCode.getRedirectUri())) {
       return oauthError(HttpStatus.BAD_REQUEST, "invalid_grant");
     }
-    OidcAccessToken accessToken = oidcService.issueAccessToken(authCode.getSubject(), clientId,
+    OidcAccessToken accessToken = tokenService.issueAccessToken(authCode.getSubject(), clientId,
         authCode.getScopes());
-    String idToken = oidcService.issueIdToken(authCode.getSubject(), clientId, authCode.getNonce());
+    String idToken = oidcIdTokenService.issueIdToken(authCode.getSubject(), clientId, authCode.getNonce());
 
     Map<String, Object> response = new HashMap<>();
     response.put("access_token", accessToken.getToken());

@@ -1,10 +1,12 @@
 package io.vacivor.nexo.security.web.session;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.vacivor.nexo.security.core.session.SessionFixationStrategy;
+import io.vacivor.nexo.security.core.session.SessionSettings;
 import java.time.Duration;
 
 @ConfigurationProperties("nexo.security.session")
-public class SessionConfiguration {
+public class SessionConfiguration implements SessionSettings {
 
   private Duration maxInactiveInterval = Duration.ofMinutes(30);
   private int inMemoryMaximumSize = 10000;

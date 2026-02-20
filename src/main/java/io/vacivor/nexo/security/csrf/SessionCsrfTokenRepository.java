@@ -5,10 +5,10 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
 import io.micronaut.context.annotation.Requires;
-import io.vacivor.nexo.security.SecurityConfiguration;
-import io.vacivor.nexo.security.web.session.Session;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionManager;
+import io.vacivor.nexo.security.config.SecurityConfiguration;
+import io.vacivor.nexo.security.core.session.Session;
+import io.vacivor.nexo.security.core.session.SessionTransportSettings;
+import io.vacivor.nexo.security.core.session.SessionManager;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,12 +18,12 @@ import java.util.UUID;
 public class SessionCsrfTokenRepository implements CsrfTokenRepository {
 
   private final SessionManager sessionManager;
-  private final SessionConfiguration sessionConfiguration;
+  private final SessionTransportSettings sessionConfiguration;
   private final SecurityConfiguration securityConfiguration;
   private final CsrfConfiguration csrfConfiguration;
 
   public SessionCsrfTokenRepository(SessionManager sessionManager,
-      SessionConfiguration sessionConfiguration,
+      SessionTransportSettings sessionConfiguration,
       SecurityConfiguration securityConfiguration,
       CsrfConfiguration csrfConfiguration) {
     this.sessionManager = sessionManager;

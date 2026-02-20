@@ -2,17 +2,17 @@ package io.vacivor.nexo.security.web.session.redis;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
+import io.vacivor.nexo.security.core.session.RedisSessionSettings;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 
 @Singleton
 public class RedisSessionLocalCache {
 
-  private final SessionConfiguration configuration;
+  private final RedisSessionSettings configuration;
   private final Cache<String, RedisSession> cache;
 
-  public RedisSessionLocalCache(SessionConfiguration configuration) {
+  public RedisSessionLocalCache(RedisSessionSettings configuration) {
     this.configuration = configuration;
     this.cache = Caffeine.newBuilder()
         .maximumSize(Math.max(1, configuration.getRedisLocalCacheMaximumSize()))

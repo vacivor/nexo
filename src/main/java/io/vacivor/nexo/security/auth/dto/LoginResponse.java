@@ -1,0 +1,45 @@
+package io.vacivor.nexo.security.auth.dto;
+
+import io.vacivor.nexo.security.auth.core.*;
+import io.vacivor.nexo.security.auth.service.*;
+import io.vacivor.nexo.security.auth.persistence.*;
+import io.vacivor.nexo.security.auth.handler.*;
+import io.vacivor.nexo.security.auth.password.*;
+import io.vacivor.nexo.security.auth.provider.local.*;
+import io.vacivor.nexo.security.auth.client.*;
+import io.vacivor.nexo.security.auth.dto.*;
+import io.vacivor.nexo.security.auth.web.*;
+
+import io.micronaut.serde.annotation.Serdeable;
+import java.util.Set;
+
+@Serdeable
+public class LoginResponse {
+
+  private String principal;
+  private Set<String> authorities;
+
+  public LoginResponse() {
+  }
+
+  public LoginResponse(String principal, Set<String> authorities) {
+    this.principal = principal;
+    this.authorities = authorities;
+  }
+
+  public String getPrincipal() {
+    return principal;
+  }
+
+  public void setPrincipal(String principal) {
+    this.principal = principal;
+  }
+
+  public Set<String> getAuthorities() {
+    return authorities;
+  }
+
+  public void setAuthorities(Set<String> authorities) {
+    this.authorities = authorities;
+  }
+}

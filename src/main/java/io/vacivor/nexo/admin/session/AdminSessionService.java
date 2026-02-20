@@ -1,10 +1,10 @@
 package io.vacivor.nexo.admin.session;
 
-import io.vacivor.nexo.security.auth.Authentication;
-import io.vacivor.nexo.security.auth.AuthenticationSessionCodec;
-import io.vacivor.nexo.security.auth.AuthenticationSessionService;
-import io.vacivor.nexo.security.web.session.Session;
-import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.security.auth.core.Authentication;
+import io.vacivor.nexo.security.auth.service.AuthenticationSessionCodec;
+import io.vacivor.nexo.security.auth.service.AuthenticationSessionService;
+import io.vacivor.nexo.security.core.session.Session;
+import io.vacivor.nexo.security.core.session.SessionRepository;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.inject.Singleton;
 import java.time.Instant;

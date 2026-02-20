@@ -1,6 +1,6 @@
 package io.vacivor.nexo.admin.user;
 
-import io.vacivor.nexo.security.auth.PasswordEncoder;
+import io.vacivor.nexo.security.auth.password.PasswordEncoder;
 import io.vacivor.nexo.dal.entity.UserEntity;
 import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;

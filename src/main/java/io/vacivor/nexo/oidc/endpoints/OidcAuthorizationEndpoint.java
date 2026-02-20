@@ -7,14 +7,15 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.uri.UriBuilder;
-import io.vacivor.nexo.security.auth.Authentication;
-import io.vacivor.nexo.security.auth.AuthenticationContext;
+import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
+import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
+import io.vacivor.nexo.security.auth.core.Authentication;
+import io.vacivor.nexo.security.auth.core.AuthenticationContext;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
 import io.vacivor.nexo.oidc.OidcConfiguration;
 import io.vacivor.nexo.oidc.OidcConsentRequest;
 import io.vacivor.nexo.oidc.OidcConsentService;
-import io.vacivor.nexo.oidc.OidcService;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,15 +30,19 @@ public class OidcAuthorizationEndpoint {
 
   private static final Logger LOG = LoggerFactory.getLogger(OidcAuthorizationEndpoint.class);
 
-  private final OidcService oidcService;
+  private final AuthorizationClientService authorizationClientService;
+  private final AuthorizationService authorizationService;
   private final AuthenticationContext authenticationContext;
   private final OidcConsentService consentService;
   private final OidcConfiguration oidcConfiguration;
 
-  public OidcAuthorizationEndpoint(OidcService oidcService, AuthenticationContext authenticationContext,
+  public OidcAuthorizationEndpoint(AuthorizationClientService authorizationClientService,
+      AuthorizationService authorizationService,
+      AuthenticationContext authenticationContext,
       OidcConsentService consentService,
       OidcConfiguration oidcConfiguration) {
-    this.oidcService = oidcService;
+    this.authorizationClientService = authorizationClientService;
+    this.authorizationService = authorizationService;
     this.authenticationContext = authenticationContext;
     this.consentService = consentService;
     this.oidcConfiguration = oidcConfiguration;
@@ -56,7 +61,7 @@ public class OidcAuthorizationEndpoint {
       LOG.warn("OIDC authorize rejected: unsupported response_type={}", responseType);
       return HttpResponse.badRequest();
     }
-    Optional<OidcClient> client = oidcService.resolveClient(clientId);
+    Optional<OidcClient> client = authorizationClientService.resolveClient(clientId);
     if (client.isEmpty() || !client.get().isRedirectUriAllowed(redirectUri)) {
       LOG.warn("OIDC authorize rejected: invalid client or redirectUri. clientId={}, redirectUri={}",
           clientId, redirectUri);
@@ -72,7 +77,7 @@ public class OidcAuthorizationEndpoint {
       return temporaryRedirect(location);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
-    if (!oidcService.isUserTenantAllowedForClient(subject, clientId)) {
+    if (!authorizationService.isUserTenantAllowedForClient(subject, clientId)) {
       LOG.warn("OIDC authorize rejected by tenant check. clientId={}, subject={}", clientId, subject);
       return errorRedirect(redirectUri, "access_denied", state, "tenant_mismatch");
     }
@@ -91,7 +96,7 @@ public class OidcAuthorizationEndpoint {
       LOG.info("OIDC authorize redirecting to consent page. requestId={}", pending.get().getRequestId());
       return temporaryRedirect(consentPage);
     }
-    OidcAuthorizationCode code = oidcService.issueAuthorizationCode(clientId, redirectUri, subject, scopes,
+    OidcAuthorizationCode code = authorizationService.issueAuthorizationCode(clientId, redirectUri, subject, scopes,
         nonce.isBlank() ? null : nonce);
     LOG.info("OIDC authorize issued code. clientId={}, subject={}, scopes={}", clientId, subject, scopes);
     URI location = UriBuilder.of(redirectUri)

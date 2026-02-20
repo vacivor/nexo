@@ -5,9 +5,9 @@ import io.micronaut.http.cookie.Cookie;
 import io.vacivor.nexo.core.ConsentService;
 import io.vacivor.nexo.dal.entity.OidcConsentEntity;
 import io.vacivor.nexo.dal.repository.OidcConsentRepository;
-import io.vacivor.nexo.security.web.session.Session;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionManager;
+import io.vacivor.nexo.security.core.session.Session;
+import io.vacivor.nexo.security.core.session.SessionTransportSettings;
+import io.vacivor.nexo.security.core.session.SessionManager;
 import jakarta.inject.Singleton;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -29,12 +29,12 @@ public class OidcConsentService implements ConsentService {
 
   private final OidcConsentRepository consentRepository;
   private final SessionManager sessionManager;
-  private final SessionConfiguration sessionConfiguration;
+  private final SessionTransportSettings sessionConfiguration;
   private final SecureRandom random = new SecureRandom();
 
   public OidcConsentService(OidcConsentRepository consentRepository,
       SessionManager sessionManager,
-      SessionConfiguration sessionConfiguration) {
+      SessionTransportSettings sessionConfiguration) {
     this.consentRepository = consentRepository;
     this.sessionManager = sessionManager;
     this.sessionConfiguration = sessionConfiguration;

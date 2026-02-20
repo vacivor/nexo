@@ -6,8 +6,9 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.vacivor.nexo.authorizationserver.oidc.OidcTokenService;
+import io.vacivor.nexo.authorizationserver.user.UserInfoService;
 import io.vacivor.nexo.oidc.OidcAccessToken;
-import io.vacivor.nexo.oidc.OidcService;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,10 +16,12 @@ import java.util.Optional;
 @Controller
 public class OidcUserInfoEndpoint {
 
-  private final OidcService oidcService;
+  private final OidcTokenService tokenService;
+  private final UserInfoService userInfoService;
 
-  public OidcUserInfoEndpoint(OidcService oidcService) {
-    this.oidcService = oidcService;
+  public OidcUserInfoEndpoint(OidcTokenService tokenService, UserInfoService userInfoService) {
+    this.tokenService = tokenService;
+    this.userInfoService = userInfoService;
   }
 
   @Get(value = "/oidc/userinfo", produces = MediaType.APPLICATION_JSON)
@@ -28,14 +31,14 @@ public class OidcUserInfoEndpoint {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
     String token = authHeader.substring("Bearer ".length()).trim();
-    Optional<OidcAccessToken> accessToken = oidcService.findAccessToken(token);
+    Optional<OidcAccessToken> accessToken = tokenService.findAccessToken(token);
     if (accessToken.isEmpty()) {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
     String subject = accessToken.get().getSubject();
     Map<String, Object> response = new HashMap<>();
     response.put("sub", subject);
-    oidcService.findUserByUsername(subject).ifPresent(user -> {
+    userInfoService.findUserByUsername(subject).ifPresent(user -> {
       response.put("email", user.getEmail());
       response.put("phone_number", user.getPhone());
       response.put("preferred_username", user.getUsername());

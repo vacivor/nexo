@@ -1,6 +1,6 @@
 package io.vacivor.nexo.security.web.session.db;
 
-import io.vacivor.nexo.security.web.session.AbstractSession;
+import io.vacivor.nexo.security.core.session.AbstractSession;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;

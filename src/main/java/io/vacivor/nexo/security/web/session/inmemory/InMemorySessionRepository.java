@@ -4,8 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import io.micronaut.context.annotation.Requires;
-import io.vacivor.nexo.security.web.session.SessionConfiguration;
-import io.vacivor.nexo.security.web.session.SessionRepository;
+import io.vacivor.nexo.security.core.session.SessionSettings;
+import io.vacivor.nexo.security.core.session.SessionRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,10 +16,10 @@ import java.util.Optional;
 @Requires(property = "nexo.security.session.store", value = "inmemory")
 public class InMemorySessionRepository implements SessionRepository<InMemorySession> {
 
-  private final SessionConfiguration configuration;
+  private final SessionSettings configuration;
   private final Cache<String, InMemorySession> cache;
 
-  public InMemorySessionRepository(SessionConfiguration configuration) {
+  public InMemorySessionRepository(SessionSettings configuration) {
     this.configuration = configuration;
     this.cache = Caffeine.newBuilder()
         .maximumSize(configuration.getInMemoryMaximumSize())

@@ -10,10 +10,10 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.uri.UriBuilder;
+import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcConsentRequest;
 import io.vacivor.nexo.oidc.OidcConsentService;
-import io.vacivor.nexo.oidc.OidcService;
 import io.micronaut.views.ModelAndView;
 import java.net.URI;
 import java.util.HashMap;
@@ -24,11 +24,11 @@ import java.util.Optional;
 public class OidcConsentEndpoint {
 
   private final OidcConsentService consentService;
-  private final OidcService oidcService;
+  private final AuthorizationService authorizationService;
 
-  public OidcConsentEndpoint(OidcConsentService consentService, OidcService oidcService) {
+  public OidcConsentEndpoint(OidcConsentService consentService, AuthorizationService authorizationService) {
     this.consentService = consentService;
-    this.oidcService = oidcService;
+    this.authorizationService = authorizationService;
   }
 
   @Get(value = "/oidc/consent", produces = MediaType.TEXT_HTML)
@@ -55,7 +55,7 @@ public class OidcConsentEndpoint {
     }
     OidcConsentRequest approved = consent.get();
     consentService.approveConsent(approved.getSubject(), approved.getClientId(), approved.getScopes());
-    OidcAuthorizationCode code = oidcService.issueAuthorizationCode(approved.getClientId(),
+    OidcAuthorizationCode code = authorizationService.issueAuthorizationCode(approved.getClientId(),
         approved.getRedirectUri(), approved.getSubject(), approved.getScopes(), approved.getNonce());
     consentService.clearPendingRequest(request, approved.getRequestId());
     URI redirect = UriBuilder.of(approved.getRedirectUri())

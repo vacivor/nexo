@@ -11,14 +11,21 @@ public class OidcRefreshToken implements RefreshToken {
   private final String clientId;
   private final Set<String> scopes;
   private final Instant expiresAt;
+  private final String familyId;
 
   public OidcRefreshToken(String token, String subject, String clientId,
       Set<String> scopes, Instant expiresAt) {
+    this(token, subject, clientId, scopes, expiresAt, null);
+  }
+
+  public OidcRefreshToken(String token, String subject, String clientId,
+      Set<String> scopes, Instant expiresAt, String familyId) {
     this.token = token;
     this.subject = subject;
     this.clientId = clientId;
     this.scopes = scopes;
     this.expiresAt = expiresAt;
+    this.familyId = familyId;
   }
 
   @Override
@@ -44,5 +51,9 @@ public class OidcRefreshToken implements RefreshToken {
   @Override
   public Instant getExpiresAt() {
     return expiresAt;
+  }
+
+  public String getFamilyId() {
+    return familyId;
   }
 }
