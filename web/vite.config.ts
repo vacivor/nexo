@@ -18,7 +18,15 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/csrf': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/oidc': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/oauth': {
         target: 'http://localhost:8080',
         changeOrigin: true,
       },

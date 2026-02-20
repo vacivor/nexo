@@ -46,7 +46,11 @@ public class SessionAuthenticationFilter implements HttpServerFilter {
       if (headerName != null && !headerName.isBlank()) {
         String headerValue = request.getHeaders().get(headerName);
         if (headerValue != null && !headerValue.isBlank()) {
-          return sessionManager.findById(headerValue.trim()).map(session -> (Session) session);
+          Optional<Session> byHeader = sessionManager.findById(headerValue.trim())
+              .map(session -> (Session) session);
+          if (byHeader.isPresent()) {
+            return byHeader;
+          }
         }
       }
     }

@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Singleton
-@Requires(property = "nexo.session.store", value = "db")
+@Requires(property = "nexo.security.session.store", value = "db")
 public class DatabaseSessionRepository implements SessionRepository<DatabaseSession> {
 
   private final SessionEntityRepository entityRepository;

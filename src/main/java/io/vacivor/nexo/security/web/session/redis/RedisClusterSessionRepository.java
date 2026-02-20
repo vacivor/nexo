@@ -1,11 +1,10 @@
 package io.vacivor.nexo.security.web.session.redis;
 
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.ScanCursor;
 import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
@@ -24,9 +23,8 @@ import java.util.Set;
 
 @Singleton
 @Requires(property = "nexo.security.session.store", value = "redis")
-@Requires(beans = StatefulRedisConnection.class)
-@Requires(missingBeans = StatefulRedisClusterConnection.class)
-public class RedisSessionRepository implements SessionRepository<RedisSession> {
+@Requires(beans = StatefulRedisClusterConnection.class)
+public class RedisClusterSessionRepository implements SessionRepository<RedisSession> {
 
   private static final String FIELD_CREATION_TIME = "creationTime";
   private static final String FIELD_LAST_ACCESSED_TIME = "lastAccessedTime";
@@ -36,12 +34,12 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
   private static final String FIELD_EXPIRATION_BUCKET_EPOCH_MINUTE = "expirationBucketEpochMinute";
   private static final Duration SESSION_GRACE_PERIOD = Duration.ofMinutes(5);
 
-  private final RedisCommands<String, String> commands;
+  private final RedisAdvancedClusterCommands<String, String> commands;
   private final SessionConfiguration configuration;
   private final SessionAttributesCodec attributesCodec;
   private final RedisSessionLocalCache localCache;
 
-  public RedisSessionRepository(StatefulRedisConnection<String, String> connection,
+  public RedisClusterSessionRepository(StatefulRedisClusterConnection<String, String> connection,
       SessionConfiguration configuration,
       SessionAttributesCodec attributesCodec,
       RedisSessionLocalCache localCache) {
@@ -87,8 +85,8 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
   public RedisSession save(RedisSession session) {
     String sessionKey = key(session.getId());
     String expiresKey = expiresKey(session.getId());
-    boolean created = commands.exists(sessionKey) == 0;
     Long previousBucketEpochMinute = readBucketEpochMinute(sessionKey);
+    boolean created = commands.exists(sessionKey) != null && commands.exists(sessionKey) == 0;
     long ttlSeconds = toTtlSeconds(session);
     Long nextBucketEpochMinute = ttlSeconds > 0 ? toBucketEpochMinute(session, ttlSeconds) : null;
     commands.hset(sessionKey, toHash(session, nextBucketEpochMinute));
@@ -130,7 +128,7 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
 
   @Override
   public List<RedisSession> findAllSessions() {
-    return activeSessions();
+    return findSessions(0, Integer.MAX_VALUE);
   }
 
   @Override
@@ -219,40 +217,6 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
       cursor = keyScan;
     }
     return total;
-  }
-
-  private List<RedisSession> activeSessions() {
-    List<RedisSession> all = new ArrayList<>();
-    Set<String> visitedIds = new HashSet<>();
-    String prefix = sessionKeyPrefix();
-    ScanArgs scanArgs = ScanArgs.Builder.matches(prefix + "*").limit(500);
-    ScanCursor cursor = ScanCursor.INITIAL;
-    while (true) {
-      KeyScanCursor<String> keyScan = commands.scan(cursor, scanArgs);
-      List<String> keys = keyScan.getKeys();
-      if (keys == null || keys.isEmpty()) {
-        if (keyScan.isFinished()) {
-          break;
-        }
-        cursor = keyScan;
-        continue;
-      }
-      for (String key : keys) {
-        if (key == null || !key.startsWith(prefix)) {
-          continue;
-        }
-        String id = key.substring(prefix.length());
-        if (!visitedIds.add(id)) {
-          continue;
-        }
-        findById(id).ifPresent(all::add);
-      }
-      if (keyScan.isFinished()) {
-        break;
-      }
-      cursor = keyScan;
-    }
-    return all;
   }
 
   private String key(String id) {

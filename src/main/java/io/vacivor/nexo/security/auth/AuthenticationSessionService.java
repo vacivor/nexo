@@ -4,6 +4,9 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
+import io.vacivor.nexo.security.SecurityConfiguration;
+import io.vacivor.nexo.security.csrf.CsrfConfiguration;
+import io.vacivor.nexo.security.csrf.CsrfService;
 import io.vacivor.nexo.security.web.session.Session;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionFixationStrategy;
@@ -22,20 +25,31 @@ public class AuthenticationSessionService {
 
   private final SessionManager sessionManager;
   private final SessionConfiguration sessionConfiguration;
+  private final SecurityConfiguration securityConfiguration;
   private final AuthenticationSessionCodec authenticationSessionCodec;
+  private final CsrfService csrfService;
+  private final CsrfConfiguration csrfConfiguration;
 
   public AuthenticationSessionService(SessionManager sessionManager,
       SessionConfiguration sessionConfiguration,
-      AuthenticationSessionCodec authenticationSessionCodec) {
+      SecurityConfiguration securityConfiguration,
+      AuthenticationSessionCodec authenticationSessionCodec,
+      CsrfService csrfService,
+      CsrfConfiguration csrfConfiguration) {
     this.sessionManager = sessionManager;
     this.sessionConfiguration = sessionConfiguration;
+    this.securityConfiguration = securityConfiguration;
     this.authenticationSessionCodec = authenticationSessionCodec;
+    this.csrfService = csrfService;
+    this.csrfConfiguration = csrfConfiguration;
   }
 
   public Session authenticate(Authentication authentication, MutableHttpResponse<?> response) {
     Session session = applySessionFixation();
     session.setAttribute(AUTH_SESSION_ATTRIBUTE, authenticationSessionCodec.toSessionValue(authentication));
     sessionManager.save(session);
+    String csrfToken = csrfService.rotateToken(session, response);
+    response.header(csrfConfiguration.getHeaderName(), csrfToken);
     if (sessionConfiguration.isCookieTransportEnabled()) {
       response.cookie(buildCookie(session.getId()));
     }
@@ -136,6 +150,9 @@ public class AuthenticationSessionService {
 
   private SameSite resolveSameSite() {
     String configured = sessionConfiguration.getCookieSameSite();
+    if (configured == null || configured.isBlank()) {
+      configured = securityConfiguration.getCookieSameSite();
+    }
     if (configured == null || configured.isBlank()) {
       return null;
     }

@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-@Requires(property = "nexo.session.store", value = "map", defaultValue = "map")
+@Requires(property = "nexo.security.session.store", value = "map", defaultValue = "map")
 public class MapSessionRepository implements SessionRepository<MapSession> {
 
   private final Map<String, MapSession> sessions = new ConcurrentHashMap<>();

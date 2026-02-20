@@ -25,6 +25,7 @@ dependencies {
     implementation("io.micronaut.views:micronaut-views-thymeleaf")
     compileOnly("io.micronaut:micronaut-http-client")
     runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.yaml:snakeyaml")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("io.micronaut:micronaut-http-client")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

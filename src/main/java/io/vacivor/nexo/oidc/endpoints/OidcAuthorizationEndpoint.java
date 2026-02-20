@@ -69,7 +69,7 @@ public class OidcAuthorizationEndpoint {
       URI location = UriBuilder.of(oidcConfiguration.getLoginPageUri())
           .queryParam("redirect", request.getUri().toString())
           .build();
-      return HttpResponse.redirect(location);
+      return temporaryRedirect(location);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
     if (!oidcService.isUserTenantAllowedForClient(subject, clientId)) {
@@ -89,7 +89,7 @@ public class OidcAuthorizationEndpoint {
           .queryParam("request_id", pending.get().getRequestId())
           .build();
       LOG.info("OIDC authorize redirecting to consent page. requestId={}", pending.get().getRequestId());
-      return HttpResponse.redirect(consentPage);
+      return temporaryRedirect(consentPage);
     }
     OidcAuthorizationCode code = oidcService.issueAuthorizationCode(clientId, redirectUri, subject, scopes,
         nonce.isBlank() ? null : nonce);
@@ -98,7 +98,7 @@ public class OidcAuthorizationEndpoint {
         .queryParam("code", code.getCode())
         .queryParam("state", state)
         .build();
-    return HttpResponse.redirect(location);
+    return temporaryRedirect(location);
   }
 
   private Set<String> parseScopes(String scope) {
@@ -119,6 +119,10 @@ public class OidcAuthorizationEndpoint {
     if (errorDescription != null && !errorDescription.isBlank()) {
       builder.queryParam("error_description", errorDescription);
     }
-    return HttpResponse.redirect(builder.build());
+    return temporaryRedirect(builder.build());
+  }
+
+  private HttpResponse<?> temporaryRedirect(URI location) {
+    return HttpResponse.status(HttpStatus.FOUND).headers(headers -> headers.location(location));
   }
 }

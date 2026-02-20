@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
-@Requires(property = "nexo.session.store", value = "inmemory")
+@Requires(property = "nexo.security.session.store", value = "inmemory")
 public class InMemorySessionRepository implements SessionRepository<InMemorySession> {
 
   private final SessionConfiguration configuration;

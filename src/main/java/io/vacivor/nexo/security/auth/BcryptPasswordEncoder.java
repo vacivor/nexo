@@ -1,11 +1,7 @@
 package io.vacivor.nexo.security.auth;
 
-import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.crypto.BCrypt;
-import jakarta.inject.Singleton;
 
-@Singleton
-@Requires(missingBeans = PasswordEncoder.class)
 public class BcryptPasswordEncoder implements PasswordEncoder {
 
   @Override

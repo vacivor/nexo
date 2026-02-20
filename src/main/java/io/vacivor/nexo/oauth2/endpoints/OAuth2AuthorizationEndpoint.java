@@ -61,7 +61,7 @@ public class OAuth2AuthorizationEndpoint {
         .queryParam("code", code.getCode())
         .queryParam("state", state)
         .build();
-    return HttpResponse.redirect(location);
+    return temporaryRedirect(location);
   }
 
   private Set<String> parseScopes(String scope) {
@@ -82,6 +82,10 @@ public class OAuth2AuthorizationEndpoint {
     if (errorDescription != null && !errorDescription.isBlank()) {
       builder.queryParam("error_description", errorDescription);
     }
-    return HttpResponse.redirect(builder.build());
+    return temporaryRedirect(builder.build());
+  }
+
+  private HttpResponse<?> temporaryRedirect(URI location) {
+    return HttpResponse.status(HttpStatus.FOUND).headers(headers -> headers.location(location));
   }
 }

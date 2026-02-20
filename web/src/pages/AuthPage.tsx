@@ -1,9 +1,12 @@
 import { Button, Card, Input, Space, Tabs, Toast, Typography } from '@douyinfe/semi-ui-19'
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { login, register } from '../api/admin'
 import type { LoginResponse } from '../api/types'
 
 export function AuthPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [loginResp, setLoginResp] = useState<LoginResponse | null>(null)
 
   const [identifier, setIdentifier] = useState('')
@@ -37,6 +40,12 @@ export function AuthPage() {
                     const resp = await login(identifier, password)
                     setLoginResp(resp ?? null)
                     Toast.success('Login success')
+                    const redirect = new URLSearchParams(location.search).get('redirect')
+                    if (redirect && redirect.trim()) {
+                      window.location.assign(redirect)
+                      return
+                    }
+                    navigate('/platform')
                   } catch (e) {
                     Toast.error((e as Error).message)
                   }
