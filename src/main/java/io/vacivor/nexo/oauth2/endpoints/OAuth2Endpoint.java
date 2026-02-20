@@ -58,6 +58,9 @@ public class OAuth2Endpoint {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
+    if (!oidcService.isUserTenantAllowedForClient(subject, clientId)) {
+      return errorRedirect(redirectUri, "access_denied", state, "tenant_mismatch");
+    }
     Set<String> scopes = parseScopes(scope);
     OidcAuthorizationCode code = oidcService.issueAuthorizationCode(clientId, redirectUri, subject, scopes,
         nonce.isBlank() ? null : nonce);
@@ -177,5 +180,19 @@ public class OAuth2Endpoint {
       return Collections.emptySet();
     }
     return new HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
+  }
+
+  private HttpResponse<?> errorRedirect(String redirectUri, String error, String state,
+      String errorDescription) {
+    if (redirectUri == null || redirectUri.isBlank()) {
+      return HttpResponse.status(HttpStatus.BAD_REQUEST);
+    }
+    UriBuilder builder = UriBuilder.of(redirectUri)
+        .queryParam("error", error)
+        .queryParam("state", state);
+    if (errorDescription != null && !errorDescription.isBlank()) {
+      builder.queryParam("error_description", errorDescription);
+    }
+    return HttpResponse.redirect(builder.build());
   }
 }

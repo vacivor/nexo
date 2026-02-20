@@ -28,5 +28,20 @@
 
 .card-block {
   width: 100%;
-  max-width: 1160px;
+}
+
+.applications-table .applications-clickable-row:hover > td {
+  background: var(--semi-color-fill-0);
+}
+
+.applications-clickable-item {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.applications-clickable-item:hover {
+  border-color: var(--semi-color-primary-light-default);
+}
+
+.applications-clickable-item:hover .semi-card-body {
+  background: var(--semi-color-fill-0);
 }

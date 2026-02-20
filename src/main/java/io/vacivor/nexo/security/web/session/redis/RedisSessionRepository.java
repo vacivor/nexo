@@ -2,6 +2,9 @@ package io.vacivor.nexo.security.web.session.redis;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.ScanArgs;
 import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
 import io.vacivor.nexo.security.web.session.SessionConfiguration;
@@ -9,9 +12,13 @@ import io.vacivor.nexo.security.web.session.SessionRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 @Requires(property = "nexo.session.store", value = "redis")
@@ -69,6 +76,133 @@ public class RedisSessionRepository implements SessionRepository<RedisSession> {
   @Override
   public void deleteById(String id) {
     commands.del(key(id));
+  }
+
+  @Override
+  public List<RedisSession> findAllSessions() {
+    return activeSessions();
+  }
+
+  @Override
+  public List<RedisSession> findSessions(int offset, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+    int normalizedOffset = Math.max(0, offset);
+    int seen = 0;
+    List<RedisSession> page = new ArrayList<>(limit);
+    Set<String> visitedIds = new HashSet<>();
+    String prefix = configuration.getRedisKeyPrefix();
+    ScanArgs scanArgs = ScanArgs.Builder.matches(prefix + "*").limit(Math.max(100, limit * 4));
+    ScanCursor cursor = ScanCursor.INITIAL;
+    while (true) {
+      KeyScanCursor<String> keyScan = commands.scan(cursor, scanArgs);
+      List<String> keys = keyScan.getKeys();
+      if (keys == null || keys.isEmpty()) {
+        if (keyScan.isFinished()) {
+          break;
+        }
+        cursor = keyScan;
+        continue;
+      }
+      for (String key : keys) {
+        if (key == null || !key.startsWith(prefix)) {
+          continue;
+        }
+        String id = key.substring(prefix.length());
+        if (!visitedIds.add(id)) {
+          continue;
+        }
+        Optional<RedisSession> sessionOpt = findById(id);
+        if (sessionOpt.isEmpty()) {
+          continue;
+        }
+        if (seen < normalizedOffset) {
+          seen++;
+          continue;
+        }
+        page.add(sessionOpt.get());
+        if (page.size() >= limit) {
+          return page;
+        }
+      }
+      if (keyScan.isFinished()) {
+        break;
+      }
+      cursor = keyScan;
+    }
+    return page;
+  }
+
+  @Override
+  public long countSessions() {
+    String prefix = configuration.getRedisKeyPrefix();
+    ScanArgs scanArgs = ScanArgs.Builder.matches(prefix + "*").limit(500);
+    ScanCursor cursor = ScanCursor.INITIAL;
+    long total = 0;
+    Set<String> visitedIds = new HashSet<>();
+    while (true) {
+      KeyScanCursor<String> keyScan = commands.scan(cursor, scanArgs);
+      List<String> keys = keyScan.getKeys();
+      if (keys == null || keys.isEmpty()) {
+        if (keyScan.isFinished()) {
+          break;
+        }
+        cursor = keyScan;
+        continue;
+      }
+      for (String key : keys) {
+        if (key == null || !key.startsWith(prefix)) {
+          continue;
+        }
+        String id = key.substring(prefix.length());
+        if (!visitedIds.add(id)) {
+          continue;
+        }
+        if (findById(id).isPresent()) {
+          total++;
+        }
+      }
+      if (keyScan.isFinished()) {
+        break;
+      }
+      cursor = keyScan;
+    }
+    return total;
+  }
+
+  private List<RedisSession> activeSessions() {
+    List<RedisSession> all = new ArrayList<>();
+    Set<String> visitedIds = new HashSet<>();
+    String prefix = configuration.getRedisKeyPrefix();
+    ScanArgs scanArgs = ScanArgs.Builder.matches(prefix + "*").limit(500);
+    ScanCursor cursor = ScanCursor.INITIAL;
+    while (true) {
+      KeyScanCursor<String> keyScan = commands.scan(cursor, scanArgs);
+      List<String> keys = keyScan.getKeys();
+      if (keys == null || keys.isEmpty()) {
+        if (keyScan.isFinished()) {
+          break;
+        }
+        cursor = keyScan;
+        continue;
+      }
+      for (String key : keys) {
+        if (key == null || !key.startsWith(prefix)) {
+          continue;
+        }
+        String id = key.substring(prefix.length());
+        if (!visitedIds.add(id)) {
+          continue;
+        }
+        findById(id).ifPresent(all::add);
+      }
+      if (keyScan.isFinished()) {
+        break;
+      }
+      cursor = keyScan;
+    }
+    return all;
   }
 
   private String key(String id) {

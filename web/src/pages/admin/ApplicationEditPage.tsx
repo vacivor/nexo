@@ -14,6 +14,7 @@ export function ApplicationEditPage() {
   const [clientType, setClientType] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [logo, setLogo] = useState('')
   const [idTokenExpiration, setIdTokenExpiration] = useState('')
   const [refreshTokenExpiration, setRefreshTokenExpiration] = useState('')
   const [redirectUris, setRedirectUris] = useState<string[]>([''])
@@ -51,6 +52,7 @@ export function ApplicationEditPage() {
         setClientType(app.clientType ?? '')
         setName(app.name ?? '')
         setDescription(app.description ?? '')
+        setLogo(app.logo ?? '')
         setIdTokenExpiration(app.idTokenExpiration ? String(app.idTokenExpiration) : '')
         setRefreshTokenExpiration(app.refreshTokenExpiration ? String(app.refreshTokenExpiration) : '')
         setRedirectUris((app.redirectUris ?? []).length > 0 ? (app.redirectUris ?? []) : [''])
@@ -77,6 +79,11 @@ export function ApplicationEditPage() {
             onChange={setDescription}
             placeholder="application description"
             rows={4}
+          />
+          <Input
+            value={logo}
+            onChange={setLogo}
+            placeholder="logo url"
           />
           <Input
             value={idTokenExpiration}
@@ -123,6 +130,7 @@ export function ApplicationEditPage() {
                     clientType: clientType.trim() || undefined,
                     name: name || undefined,
                     description: description.trim() || undefined,
+                    logo: logo.trim() || undefined,
                     idTokenExpiration: parseOptionalPositiveInt(idTokenExpiration),
                     refreshTokenExpiration: parseOptionalPositiveInt(refreshTokenExpiration),
                     redirectUris: normalizeRedirectUris(redirectUris),

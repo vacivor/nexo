@@ -3,9 +3,7 @@ package io.vacivor.nexo.security.web.session;
 import java.util.UUID;
 import jakarta.inject.Singleton;
 
-/**
- * @author lumreco lumreco@gmail.com
- */
+
 @Singleton
 public class UuidSessionIdGenerator implements SessionIdGenerator {
 

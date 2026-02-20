@@ -26,7 +26,7 @@ public class OidcDiscoveryEndpoint {
     return oidcService.discovery(request);
   }
 
-  @Get("/oauth/jwks")
+  @Get("/oidc/jwks")
   @Produces(MediaType.APPLICATION_JSON)
   public Map<String, Object> jwks() {
     return jwksService.jwks();

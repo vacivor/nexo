@@ -1,0 +1,30 @@
+server:
+  port: 9090
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          nexo:
+            authorization-uri: http://localhost:8080/oidc/authorize
+            token-uri: http://localhost:8080/oidc/token
+            jwk-set-uri: http://localhost:8080/oidc/jwks
+            user-info-uri: http://localhost:8080/oidc/userinfo
+            user-name-attribute: sub
+        registration:
+          nexo:
+            provider: nexo
+            client-id: NUfUo7JIAOm3nEWDd03jIFdnMt5
+            client-secret: HzKfLGLwQV0x04g8Z2edaCh7l1kLg9FrTpP5iiyObPc
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+  thymeleaf:
+    cache: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

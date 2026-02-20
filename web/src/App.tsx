@@ -9,6 +9,7 @@ import { ProvidersPage } from './pages/admin/ProvidersPage'
 import { TenantCreatePage } from './pages/admin/TenantCreatePage'
 import { TenantEditPage } from './pages/admin/TenantEditPage'
 import { TenantsPage } from './pages/admin/TenantsPage'
+import { SessionsPage } from './pages/admin/SessionsPage'
 import { UserCreatePage } from './pages/admin/UserCreatePage'
 import { UserEditPage } from './pages/admin/UserEditPage'
 import { UsersPage } from './pages/admin/UsersPage'
@@ -35,6 +36,7 @@ function App() {
         <Route path="providers" element={<ProvidersPage />} />
         <Route path="providers/create" element={<ProviderCreatePage />} />
         <Route path="providers/:uuid/edit" element={<ProviderEditPage />} />
+        <Route path="sessions" element={<SessionsPage />} />
       </Route>
       <Route path="/tenant" element={<AdminLayout basePath="/tenant" title="Tenant" />}>
         <Route index element={<Navigate to="/tenant/users" replace />} />
@@ -46,6 +48,7 @@ function App() {
         <Route path="providers" element={<ProvidersPage />} />
         <Route path="providers/create" element={<ProviderCreatePage />} />
         <Route path="providers/:uuid/edit" element={<ProviderEditPage />} />
+        <Route path="sessions" element={<SessionsPage />} />
       </Route>
       <Route path="/admin" element={<Navigate to="/platform" replace />} />
       <Route path="*" element={<Navigate to="/auth" replace />} />

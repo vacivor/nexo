@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexo + Spring Security Example</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .actions a { margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Spring Security OIDC Example</h1>
+  <p th:if="${principalName == null}">Current user: anonymous</p>
+  <p th:if="${principalName != null}" th:text="'Current user: ' + ${principalName}"></p>
+
+  <div class="actions" th:if="${principalName == null}">
+    <a href="/oauth2/authorization/nexo">Login with Nexo OIDC</a>
+  </div>
+  <div class="actions" th:if="${principalName != null}">
+    <a href="/me">View /me JSON</a>
+    <a href="/logout">Logout</a>
+  </div>
+</body>
+</html>

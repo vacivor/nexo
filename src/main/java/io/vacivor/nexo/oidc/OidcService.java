@@ -6,6 +6,7 @@ import io.vacivor.nexo.oidc.store.OidcAccessTokenStore;
 import io.vacivor.nexo.oidc.store.OidcAuthorizationCodeStore;
 import io.vacivor.nexo.oidc.store.OidcRefreshTokenStore;
 import io.vacivor.nexo.dal.entity.UserEntity;
+import io.vacivor.nexo.dal.repository.TenantUserRepository;
 import io.vacivor.nexo.dal.repository.UserRepository;
 import jakarta.inject.Singleton;
 import java.security.SecureRandom;
@@ -27,6 +28,7 @@ public class OidcService {
   private final OidcJwtSigner jwtSigner;
   private final OidcKeyService keyService;
   private final UserRepository userRepository;
+  private final TenantUserRepository tenantUserRepository;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public OidcService(OidcConfiguration configuration,
@@ -36,7 +38,8 @@ public class OidcService {
       OidcRefreshTokenStore refreshTokenStore,
       OidcJwtSigner jwtSigner,
       OidcKeyService keyService,
-      UserRepository userRepository) {
+      UserRepository userRepository,
+      TenantUserRepository tenantUserRepository) {
     this.configuration = configuration;
     this.clientService = clientService;
     this.codeStore = codeStore;
@@ -45,6 +48,7 @@ public class OidcService {
     this.jwtSigner = jwtSigner;
     this.keyService = keyService;
     this.userRepository = userRepository;
+    this.tenantUserRepository = tenantUserRepository;
   }
 
   public Map<String, Object> discovery(HttpRequest<?> request) {
@@ -53,10 +57,10 @@ public class OidcService {
     String signingAlg = configuration.getSigningAlgorithm();
     return Map.of(
         "issuer", issuer,
-        "authorization_endpoint", baseUrl + "/oauth/authorize",
-        "token_endpoint", baseUrl + "/oauth/token",
-        "userinfo_endpoint", baseUrl + "/oauth/userinfo",
-        "jwks_uri", baseUrl + "/oauth/jwks",
+        "authorization_endpoint", baseUrl + "/oidc/authorize",
+        "token_endpoint", baseUrl + "/oidc/token",
+        "userinfo_endpoint", baseUrl + "/oidc/userinfo",
+        "jwks_uri", baseUrl + "/oidc/jwks",
         "response_types_supported", new String[] {"code"},
         "subject_types_supported", new String[] {"public"},
         "id_token_signing_alg_values_supported", new String[] {signingAlg}
@@ -124,6 +128,27 @@ public class OidcService {
         clientService));
   }
 
+  public boolean isUserTenantAllowedForClient(String username, String clientId) {
+    if (username == null || username.isBlank() || clientId == null || clientId.isBlank()) {
+      return false;
+    }
+    Optional<UserEntity> user = userRepository.findByUsername(username);
+    Optional<ApplicationEntity> client = clientService.findEntityByClientId(clientId);
+    if (user.isEmpty() || client.isEmpty()) {
+      return false;
+    }
+    if (Boolean.TRUE.equals(user.get().getIsDeleted())) {
+      return false;
+    }
+    String clientTenantId = normalize(client.get().getTenantId());
+    if (clientTenantId == null) {
+      return true;
+    }
+    return tenantUserRepository.existsActiveMembership(
+        user.get().getId(),
+        clientTenantId);
+  }
+
   private String randomToken() {
     byte[] bytes = new byte[32];
     secureRandom.nextBytes(bytes);
@@ -151,5 +176,13 @@ public class OidcService {
       return Optional.empty();
     }
     return clientService.findEntityByClientId(clientId);
+  }
+
+  private String normalize(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 }

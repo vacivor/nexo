@@ -12,6 +12,7 @@ public class OidcConfiguration {
   private String rsaPrivateKey;
   private String rsaPublicKey;
   private String keyId = "nexo-oidc";
+  private String loginPageUri = "/auth";
   private Duration codeTtl = Duration.ofMinutes(5);
   private Duration accessTokenTtl = Duration.ofHours(1);
   private Duration idTokenTtl = Duration.ofHours(1);
@@ -64,6 +65,14 @@ public class OidcConfiguration {
 
   public void setKeyId(String keyId) {
     this.keyId = keyId;
+  }
+
+  public String getLoginPageUri() {
+    return loginPageUri;
+  }
+
+  public void setLoginPageUri(String loginPageUri) {
+    this.loginPageUri = loginPageUri;
   }
 
   public Duration getCodeTtl() {

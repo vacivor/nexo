@@ -25,6 +25,7 @@ export type Application = {
   clientSecret: string
   name: string
   description?: string
+  logo?: string
   idTokenExpiration?: number
   refreshTokenExpiration?: number
   redirectUris: string[]
@@ -48,4 +49,13 @@ export type IdentityProvider = {
   redirectUri?: string
   scopes?: string
   extraConfig?: string
+}
+
+export type SessionView = {
+  id: string
+  principal?: string
+  createdAt: string
+  lastAccessedAt: string
+  expiresAt?: string
+  isNew: boolean
 }

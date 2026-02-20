@@ -5,6 +5,7 @@ import {
   IconBell,
   IconHelpCircle,
   IconLink,
+  IconSafe,
   IconSidebar,
   IconUserGroup,
 } from '@douyinfe/semi-icons'
@@ -24,6 +25,7 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
       { itemKey: `${basePath}/users`, text: 'Users', icon: <IconUserGroup /> },
       { itemKey: `${basePath}/applications`, text: 'Applications', icon: <IconAppCenter /> },
       { itemKey: `${basePath}/providers`, text: 'Providers', icon: <IconLink /> },
+      { itemKey: `${basePath}/sessions`, text: 'Sessions', icon: <IconSafe /> },
     ]
     if (basePath === '/platform' || basePath === '/admin') {
       items.splice(1, 0, { itemKey: `${basePath}/tenants`, text: 'Tenants', icon: <IconApartment /> })
@@ -77,10 +79,6 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
     return () => mdQuery.removeEventListener?.('change', sync)
   }, [mdQuery])
 
-  const onBreakpoint = (_screen: string, isBelow: boolean) => {
-    setCollapsed(!isBelow)
-  }
-
   return (
     <Layout style={{ border: '1px solid var(--semi-color-border)', height: '100vh' }}>
       <Layout.Header style={{ backgroundColor: 'var(--semi-color-bg-1)' }}>
@@ -127,14 +125,10 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
         <Layout.Sider
           style={{
             backgroundColor: 'var(--semi-color-bg-1)',
-            transition: 'width 0.2s ease',
-            width: collapsed ? 64 : 220,
           }}
-          breakpoint={['md']}
-          onBreakpoint={onBreakpoint}
         >
           <Nav
-            style={{ maxWidth: collapsed ? 64 : 220, height: '100%' }}
+            style={{ width: collapsed ? 64 : 220, height: '100%', transition: 'width 0.2s ease' }}
             items={navItems}
             selectedKeys={[selectedKey]}
             isCollapsed={collapsed}

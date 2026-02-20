@@ -61,6 +61,7 @@ public class ApplicationService {
       String clientType,
       String name,
       String description,
+      String logo,
       Integer idTokenExpiration,
       Integer refreshTokenExpiration,
       List<String> redirectUris) {
@@ -69,6 +70,7 @@ public class ApplicationService {
       existing.setClientType(clientType);
       existing.setName(name);
       existing.setDescription(description);
+      existing.setLogo(logo);
       existing.setIdTokenExpiration(idTokenExpiration);
       existing.setRefreshTokenExpiration(refreshTokenExpiration);
       existing.setRedirectUris(String.join(",", redirectUris));

@@ -72,6 +72,7 @@ public class AdminApplicationController {
             isBlank(request.clientType()) ? null : request.clientType().trim(),
             isBlank(request.name()) ? null : request.name().trim(),
             isBlank(request.description()) ? null : request.description().trim(),
+            isBlank(request.logo()) ? null : request.logo().trim(),
             positiveOrNull(request.idTokenExpiration()),
             positiveOrNull(request.refreshTokenExpiration()),
             redirectUris)
@@ -106,6 +107,7 @@ public class AdminApplicationController {
         application.getClientSecret(),
         application.getName(),
         application.getDescription(),
+        application.getLogo(),
         application.getClientType(),
         application.getIdTokenExpiration(),
         application.getRefreshTokenExpiration(),
@@ -121,6 +123,7 @@ public class AdminApplicationController {
   @Introspected
   @Serdeable.Deserializable
   public record UpdateApplicationRequest(String tenantId, String clientType, String name, String description,
+                                         String logo,
                                          Integer idTokenExpiration, Integer refreshTokenExpiration,
                                          List<String> redirectUris) {
   }
@@ -129,7 +132,8 @@ public class AdminApplicationController {
   @Serdeable
   public record ApplicationResponse(Long id, String uuid, String tenantId, String clientId,
                                     String clientSecret, String name, String description,
-                                    String clientType, Integer idTokenExpiration, Integer refreshTokenExpiration,
+                                    String logo, String clientType,
+                                    Integer idTokenExpiration, Integer refreshTokenExpiration,
                                     List<String> redirectUris) {
   }
 }

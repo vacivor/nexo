@@ -23,6 +23,8 @@ public class ApplicationEntity extends TenantBaseEntity {
   private String name;
   @Column
   private String description;
+  @Column(name = "logo")
+  private String logo;
   @Column(name = "client_type")
   private String clientType;
   @Column(name = "client_id")
@@ -58,6 +60,14 @@ public class ApplicationEntity extends TenantBaseEntity {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public String getLogo() {
+    return logo;
+  }
+
+  public void setLogo(String logo) {
+    this.logo = logo;
   }
 
   public String getClientType() {

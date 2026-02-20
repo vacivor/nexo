@@ -9,9 +9,7 @@ import jakarta.inject.Singleton;
 import java.time.Instant;
 import java.util.Optional;
 
-/**
- * @author lumreco lumreco@gmail.com
- */
+
 @Singleton
 @Requires(beans = SessionRepository.class)
 public class SessionManager<S extends Session> {

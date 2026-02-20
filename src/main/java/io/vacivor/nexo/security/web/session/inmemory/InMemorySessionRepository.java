@@ -8,6 +8,8 @@ import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Singleton
@@ -54,6 +56,53 @@ public class InMemorySessionRepository implements SessionRepository<InMemorySess
   @Override
   public void deleteById(String id) {
     cache.invalidate(id);
+  }
+
+  @Override
+  public List<InMemorySession> findAllSessions() {
+    return activeSessions();
+  }
+
+  @Override
+  public List<InMemorySession> findSessions(int offset, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+    int normalizedOffset = Math.max(0, offset);
+    int skipped = 0;
+    List<InMemorySession> page = new ArrayList<>(limit);
+    for (InMemorySession session : cache.asMap().values()) {
+      if (session.isExpired()) {
+        cache.invalidate(session.getId());
+        continue;
+      }
+      if (skipped < normalizedOffset) {
+        skipped++;
+        continue;
+      }
+      page.add(session);
+      if (page.size() >= limit) {
+        break;
+      }
+    }
+    return page;
+  }
+
+  @Override
+  public long countSessions() {
+    return activeSessions().size();
+  }
+
+  private List<InMemorySession> activeSessions() {
+    List<InMemorySession> all = new ArrayList<>();
+    for (InMemorySession session : cache.asMap().values()) {
+      if (session.isExpired()) {
+        cache.invalidate(session.getId());
+        continue;
+      }
+      all.add(session);
+    }
+    return all;
   }
 
   private static class SessionExpiry implements Expiry<String, InMemorySession> {

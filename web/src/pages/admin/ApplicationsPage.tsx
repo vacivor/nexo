@@ -1,9 +1,10 @@
-import { Button, Card, Input, Modal, Space, Toast, Typography } from '@douyinfe/semi-ui-19'
+import { Button, Card, Dropdown, Input, Modal, Space, Table, Toast, Typography } from '@douyinfe/semi-ui-19'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { createApplication, deleteApplication, listApplications } from '../../api/admin'
 import { resolveConsoleBasePath } from '../../layout/consoleScope'
 import type { Application } from '../../api/types'
+import { IconMore } from '@douyinfe/semi-icons'
 
 const CLIENT_TYPES = [
   {
@@ -34,6 +35,7 @@ export function ApplicationsPage() {
   const [createVisible, setCreateVisible] = useState(false)
   const [name, setName] = useState('')
   const [clientType, setClientType] = useState<string>('')
+  const isPlatform = basePath === '/platform'
 
   const load = async () => {
     setApplications(await listApplications())
@@ -52,46 +54,132 @@ export function ApplicationsPage() {
           </Button>
           <Button onClick={() => load().catch(() => undefined)}>Refresh</Button>
         </Space>
-        <Space wrap align="start" style={{ width: '100%' }}>
-          {applications.map((application) => (
-            <Card
-              key={application.uuid}
-              style={{ width: 360 }}
-              title={application.name || '(Unnamed)'}
-              footer={
-                <Space>
-                  <Button size="small" onClick={() => navigate(`${basePath}/applications/${application.uuid}/edit`)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    type="danger"
-                    onClick={async () => {
-                      try {
-                        await deleteApplication(application.uuid)
-                        await load()
-                        Toast.success('Application deleted')
-                      } catch (e) {
-                        Toast.error((e as Error).message)
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </Space>
-              }
-            >
-              <Space vertical spacing="tight" style={{ width: '100%' }}>
-                <Typography.Text type="tertiary">Application Type</Typography.Text>
-                <Typography.Text>{application.clientType || '-'}</Typography.Text>
-                <Typography.Text type="tertiary">Description</Typography.Text>
-                <Typography.Text>{application.description || '-'}</Typography.Text>
-                <Typography.Text type="tertiary">Client ID</Typography.Text>
-                <Typography.Text style={{ wordBreak: 'break-all' }}>{application.clientId || '-'}</Typography.Text>
-              </Space>
-            </Card>
-          ))}
-        </Space>
+        {isPlatform ? (
+          <Table
+            className="applications-table"
+            rowKey="uuid"
+            pagination
+            dataSource={applications}
+            onRow={(record?: Application) => ({
+              onClick: () => {
+                if (!record) {
+                  return
+                }
+                navigate(`${basePath}/applications/${record.uuid}/edit`)
+              },
+              style: { cursor: 'pointer' },
+            })}
+            columns={[
+              {
+                title: 'Logo',
+                dataIndex: 'logo',
+                render: (v: string) =>
+                  v ? (
+                    <img src={v} alt="logo" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: 4 }} />
+                  ) : (
+                    '-'
+                  ),
+              },
+              { title: 'Name', dataIndex: 'name', render: (v: string) => v || '(Unnamed)' },
+              { title: 'Type', dataIndex: 'clientType', render: (v: string) => v || '-' },
+              { title: 'Description', dataIndex: 'description', render: (v: string) => v || '-' },
+              {
+                title: 'Client ID',
+                dataIndex: 'clientId',
+                render: (v: string) => <span style={{ wordBreak: 'break-all' }}>{v || '-'}</span>,
+              },
+              {
+                title: 'Actions',
+                render: (_: unknown, record: Application) => (
+                  <Space>
+                    <Button
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`${basePath}/applications/${record.uuid}/edit`)
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      type="danger"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        try {
+                          await deleteApplication(record.uuid)
+                          await load()
+                          Toast.success('Application deleted')
+                        } catch (e) {
+                          Toast.error((e as Error).message)
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Space>
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>
+            <Space vertical style={{ width: '100%' }}>
+              {applications.map((application) => (
+                <Card
+                  key={application.uuid}
+                  className="applications-clickable-item"
+                  style={{ width: '100%' }}
+                  bodyStyle={{ padding: 14 }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 20, minWidth: 0, flex: 1, cursor: 'pointer' }}
+                      onClick={() => navigate(`${basePath}/applications/${application.uuid}/edit`)}
+                    >
+                      <div style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {application.logo ? (
+                          <img
+                            src={application.logo}
+                            alt="logo"
+                            style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6 }}
+                          />
+                        ) : (
+                          '-'
+                        )}
+                      </div>
+                      <div style={{ minWidth: 180 }}>
+                        <div>{application.name || '(Unnamed)'}</div>
+                        <Typography.Text type="tertiary">{application.clientType || '-'}</Typography.Text>
+                      </div>
+                      <div style={{ minWidth: 260 }}>
+                        <Typography.Text type="tertiary">Client ID</Typography.Text>
+                        <div style={{ wordBreak: 'break-all' }}>{application.clientId || '-'}</div>
+                      </div>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Dropdown
+                        trigger="click"
+                        position="bottomRight"
+                        menu={[
+                          {
+                            node: 'item',
+                            name: 'Settings',
+                            onClick: () => navigate(`${basePath}/applications/${application.uuid}/edit`),
+                          },
+                        ]}
+                      >
+                        <span style={{ display: 'inline-flex' }}>
+                          <Button theme="borderless" type="tertiary" icon={<IconMore />} />
+                        </span>
+                      </Dropdown>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </Space>
+          </div>
+        )}
       </Card>
       <Modal
         title="Create Application"
@@ -150,25 +238,27 @@ export function ApplicationsPage() {
             }}
           >
             {CLIENT_TYPES.map((item) => (
-              <Card
+              <div
                 key={item.value}
-                style={{
-                  width: 160,
-                  flex: '0 0 160px',
-                  cursor: 'pointer',
-                  border:
-                    clientType === item.value
-                      ? '1px solid var(--semi-color-primary)'
-                      : undefined,
-                }}
+                style={{ width: 160, flex: '0 0 160px', cursor: 'pointer' }}
                 onClick={() => setClientType(item.value)}
               >
-                <Space vertical spacing="tight">
-                  <Typography.Text strong>{item.title}</Typography.Text>
-                  <Typography.Text>{item.description}</Typography.Text>
-                  <Typography.Text type="tertiary">{item.examples}</Typography.Text>
-                </Space>
-              </Card>
+                <Card
+                  style={{
+                    width: '100%',
+                    border:
+                      clientType === item.value
+                        ? '1px solid var(--semi-color-primary)'
+                        : undefined,
+                  }}
+                >
+                  <Space vertical spacing="tight">
+                    <Typography.Text strong>{item.title}</Typography.Text>
+                    <Typography.Text>{item.description}</Typography.Text>
+                    <Typography.Text type="tertiary">{item.examples}</Typography.Text>
+                  </Space>
+                </Card>
+              </div>
             ))}
           </div>
         </div>

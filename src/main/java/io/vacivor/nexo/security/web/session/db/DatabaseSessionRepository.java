@@ -8,6 +8,9 @@ import io.vacivor.nexo.dal.entity.SessionEntity;
 import io.vacivor.nexo.dal.repository.SessionEntityRepository;
 import jakarta.inject.Singleton;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,6 +59,44 @@ public class DatabaseSessionRepository implements SessionRepository<DatabaseSess
   @Override
   public void deleteById(String id) {
     entityRepository.deleteById(id);
+  }
+
+  @Override
+  public List<DatabaseSession> findAllSessions() {
+    List<DatabaseSession> all = new ArrayList<>();
+    for (SessionEntity entity : entityRepository.findAll()) {
+      DatabaseSession session = toSession(entity);
+      if (session.isExpired()) {
+        deleteById(session.getId());
+        continue;
+      }
+      all.add(session);
+    }
+    all.sort(Comparator.comparing(DatabaseSession::getLastAccessedTime).reversed());
+    return all;
+  }
+
+  @Override
+  public List<DatabaseSession> findSessions(int offset, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+    int normalizedOffset = Math.max(0, offset);
+    List<DatabaseSession> page = new ArrayList<>();
+    for (SessionEntity entity : entityRepository.findPage(normalizedOffset, limit)) {
+      DatabaseSession session = toSession(entity);
+      if (session.isExpired()) {
+        deleteById(session.getId());
+        continue;
+      }
+      page.add(session);
+    }
+    return page;
+  }
+
+  @Override
+  public long countSessions() {
+    return entityRepository.countAllSessions();
   }
 
   private DatabaseSession toSession(SessionEntity entity) {

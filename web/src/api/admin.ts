@@ -1,5 +1,5 @@
 import { callApi } from './http'
-import type { Application, IdentityProvider, IdentityProviderProtocol, LoginResponse, Tenant, User } from './types'
+import type { Application, IdentityProvider, IdentityProviderProtocol, LoginResponse, SessionView, Tenant, User } from './types'
 import { resolveConsoleApiBase } from '../layout/consoleScope'
 
 function apiPath(path: string): string {
@@ -96,6 +96,7 @@ export async function updateApplication(uuid: string, input: {
   clientType?: string
   name?: string
   description?: string
+  logo?: string
   idTokenExpiration?: number
   refreshTokenExpiration?: number
   redirectUris?: string[]
@@ -159,4 +160,12 @@ export async function setProviderEnabled(uuid: string, enabled: boolean): Promis
 
 export async function deleteProvider(uuid: string): Promise<void> {
   await callApi(apiPath(`/providers/${uuid}`), 'DELETE')
+}
+
+export async function listSessions(): Promise<SessionView[]> {
+  return (await callApi<SessionView[]>(apiPath('/sessions'), 'GET')) ?? []
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await callApi(apiPath(`/sessions/${encodeURIComponent(sessionId)}`), 'DELETE')
 }

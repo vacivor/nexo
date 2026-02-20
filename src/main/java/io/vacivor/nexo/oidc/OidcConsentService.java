@@ -10,9 +10,13 @@ import io.vacivor.nexo.security.web.session.SessionConfiguration;
 import io.vacivor.nexo.security.web.session.SessionManager;
 import jakarta.inject.Singleton;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,7 +73,7 @@ public class OidcConsentService implements ConsentService {
     String csrfToken = randomToken();
     OidcConsentRequest consentRequest = new OidcConsentRequest(requestId, csrfToken, subject, clientId,
         redirectUri, scopes, state, nonce);
-    session.setAttribute(CONSENT_PREFIX + requestId, consentRequest);
+    session.setAttribute(CONSENT_PREFIX + requestId, toSessionValue(consentRequest));
     sessionManager.save(session);
     return Optional.of(consentRequest);
   }
@@ -79,7 +83,8 @@ public class OidcConsentService implements ConsentService {
     if (session.isEmpty()) {
       return Optional.empty();
     }
-    return session.get().getAttribute(CONSENT_PREFIX + requestId, OidcConsentRequest.class);
+    Object value = session.get().getAttribute(CONSENT_PREFIX + requestId);
+    return fromSessionValue(value);
   }
 
   public void clearPendingRequest(HttpRequest<?> request, String requestId) {
@@ -117,5 +122,59 @@ public class OidcConsentService implements ConsentService {
     byte[] bytes = new byte[24];
     random.nextBytes(bytes);
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  private Map<String, Object> toSessionValue(OidcConsentRequest request) {
+    Map<String, Object> map = new HashMap<>();
+    map.put("requestId", request.getRequestId());
+    map.put("csrfToken", request.getCsrfToken());
+    map.put("subject", request.getSubject());
+    map.put("clientId", request.getClientId());
+    map.put("redirectUri", request.getRedirectUri());
+    map.put("scopes", new ArrayList<>(request.getScopes()));
+    map.put("state", request.getState());
+    map.put("nonce", request.getNonce());
+    return map;
+  }
+
+  private Optional<OidcConsentRequest> fromSessionValue(Object value) {
+    if (value instanceof OidcConsentRequest request) {
+      return Optional.of(request);
+    }
+    if (!(value instanceof Map<?, ?> map)) {
+      return Optional.empty();
+    }
+    String requestId = stringValue(map.get("requestId"));
+    String csrfToken = stringValue(map.get("csrfToken"));
+    String subject = stringValue(map.get("subject"));
+    String clientId = stringValue(map.get("clientId"));
+    String redirectUri = stringValue(map.get("redirectUri"));
+    if (isBlank(requestId) || isBlank(csrfToken) || isBlank(subject) || isBlank(clientId)
+        || isBlank(redirectUri)) {
+      return Optional.empty();
+    }
+    Set<String> scopes = parseScopeList(map.get("scopes"));
+    String state = stringValue(map.get("state"));
+    String nonce = stringValue(map.get("nonce"));
+    return Optional.of(new OidcConsentRequest(requestId, csrfToken, subject, clientId, redirectUri,
+        scopes, state, nonce));
+  }
+
+  private Set<String> parseScopeList(Object value) {
+    if (!(value instanceof List<?> list)) {
+      return Collections.emptySet();
+    }
+    return list.stream()
+        .map(this::stringValue)
+        .filter(s -> s != null && !s.isBlank())
+        .collect(Collectors.toCollection(TreeSet::new));
+  }
+
+  private String stringValue(Object value) {
+    return value == null ? null : String.valueOf(value);
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
   }
 }

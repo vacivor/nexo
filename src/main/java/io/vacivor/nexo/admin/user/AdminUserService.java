@@ -27,7 +27,11 @@ public class AdminUserService {
     return userRepository.findByIdAndIsDeletedNotTrue(id);
   }
 
-  public Optional<UserEntity> createUser(String username, String email, String phone, String password) {
+  public Optional<UserEntity> createUser(
+      String username,
+      String email,
+      String phone,
+      String password) {
     String normalizedUsername = normalize(username);
     String normalizedEmail = normalize(email);
     String normalizedPhone = normalize(phone);
@@ -49,7 +53,11 @@ public class AdminUserService {
     return Optional.of(userRepository.save(user));
   }
 
-  public Optional<UserEntity> updateUser(Long id, String username, String email, String phone) {
+  public Optional<UserEntity> updateUser(
+      Long id,
+      String username,
+      String email,
+      String phone) {
     Optional<UserEntity> existing = userRepository.findByIdAndIsDeletedNotTrue(id);
     if (existing.isEmpty()) {
       return Optional.empty();
