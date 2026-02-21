@@ -6,7 +6,7 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Produces;
-import java.util.Map;
+import io.micronaut.serde.annotation.Serdeable;
 
 @Controller
 public class CsrfController {
@@ -21,16 +21,17 @@ public class CsrfController {
 
   @Get("/csrf")
   @Produces(MediaType.APPLICATION_JSON)
-  public HttpResponse<Map<String, String>> csrf() {
+  public HttpResponse<CsrfTokenResponse> csrf() {
     if (!csrfConfiguration.isEnabled()) {
-      return HttpResponse.ok(Map.of("token", ""));
+      return HttpResponse.ok(new CsrfTokenResponse(""));
     }
-    MutableHttpResponse<Map<String, String>> response = HttpResponse.ok();
+    MutableHttpResponse<CsrfTokenResponse> response = HttpResponse.ok();
     String token = csrfService.issueToken(response);
-    response.body(Map.of(
-        "token", token,
-        "headerName", csrfConfiguration.getHeaderName(),
-        "parameterName", csrfConfiguration.getParameterName()));
+    response.body(new CsrfTokenResponse(token));
     return response;
+  }
+
+  @Serdeable
+  private record CsrfTokenResponse(String token) {
   }
 }

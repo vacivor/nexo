@@ -10,7 +10,6 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.QueryValue;
 import io.vacivor.nexo.admin.session.AdminSessionController;
 import io.vacivor.nexo.admin.session.AdminSessionService;
-import java.util.List;
 
 @Controller("/api/platform/sessions")
 public class PlatformSessionController {
@@ -23,11 +22,10 @@ public class PlatformSessionController {
 
   @Get
   @Produces(MediaType.APPLICATION_JSON)
-  public HttpResponse<List<AdminSessionService.SessionView>> list(
-      @QueryValue(defaultValue = "0") int offset,
-      @QueryValue(defaultValue = "20") int limit,
-      @QueryValue(defaultValue = "false") boolean includeTotal) {
-    return delegate.list(offset, limit, includeTotal);
+  public HttpResponse<AdminSessionService.SessionPage> list(
+      @QueryValue(defaultValue = "") String cursor,
+      @QueryValue(defaultValue = "10") int limit) {
+    return delegate.list(cursor, limit);
   }
 
   @Delete("/{id}")

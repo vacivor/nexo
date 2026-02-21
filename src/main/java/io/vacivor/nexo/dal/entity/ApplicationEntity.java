@@ -1,6 +1,4 @@
 package io.vacivor.nexo.dal.entity;
-
-import io.vacivor.nexo.TenantBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -14,7 +12,7 @@ import jakarta.persistence.UniqueConstraint;
             name = "uk_applications_client_id_deleted_at",
             columnNames = {"client_id", "deleted_at"})
     })
-public class ApplicationEntity extends TenantBaseEntity {
+public class ApplicationEntity extends BaseEntity {
 
   @Column(name = "uuid", nullable = false, unique = true, updatable = false)
   private String uuid;

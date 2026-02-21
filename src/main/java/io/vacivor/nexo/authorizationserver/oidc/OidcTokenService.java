@@ -2,9 +2,8 @@ package io.vacivor.nexo.authorizationserver.oidc;
 
 import io.vacivor.nexo.core.RefreshTokenConsumeResult;
 import io.vacivor.nexo.core.RefreshTokenConsumeStatus;
-import io.vacivor.nexo.dal.entity.ApplicationEntity;
+import io.vacivor.nexo.authorizationserver.client.ClientConfigurationService;
 import io.vacivor.nexo.oidc.OidcAccessToken;
-import io.vacivor.nexo.oidc.OidcClientService;
 import io.vacivor.nexo.oidc.OidcConfiguration;
 import io.vacivor.nexo.oidc.OidcRefreshToken;
 import io.vacivor.nexo.oidc.store.OidcAccessTokenStore;
@@ -22,17 +21,17 @@ import java.util.Set;
 public class OidcTokenService {
 
   private final OidcConfiguration configuration;
-  private final OidcClientService clientService;
+  private final ClientConfigurationService clientConfigurationService;
   private final OidcAccessTokenStore accessTokenStore;
   private final OidcRefreshTokenStore refreshTokenStore;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public OidcTokenService(OidcConfiguration configuration,
-      OidcClientService clientService,
+      ClientConfigurationService clientConfigurationService,
       OidcAccessTokenStore accessTokenStore,
       OidcRefreshTokenStore refreshTokenStore) {
     this.configuration = configuration;
-    this.clientService = clientService;
+    this.clientConfigurationService = clientConfigurationService;
     this.accessTokenStore = accessTokenStore;
     this.refreshTokenStore = refreshTokenStore;
   }
@@ -134,17 +133,8 @@ public class OidcTokenService {
   }
 
   private Duration resolveRefreshTokenTtl(String clientId) {
-    return resolveClientEntity(clientId)
-        .map(ApplicationEntity::getRefreshTokenExpiration)
-        .filter(value -> value != null && value > 0)
+    return clientConfigurationService.findRefreshTokenExpirationSeconds(clientId)
         .map(Duration::ofSeconds)
         .orElse(configuration.getRefreshTokenTtl());
-  }
-
-  private Optional<ApplicationEntity> resolveClientEntity(String clientId) {
-    if (clientId == null || clientId.isBlank()) {
-      return Optional.empty();
-    }
-    return clientService.findEntityByClientId(clientId);
   }
 }

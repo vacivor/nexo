@@ -13,6 +13,8 @@ public class OidcConfiguration {
   private String rsaPublicKey;
   private String keyId = "nexo-oidc";
   private String loginPageUri = "/auth";
+  private String oauthConsentPageUri = "/oauth/consent";
+  private String oidcConsentPageUri = "/oidc/consent";
   private Duration codeTtl = Duration.ofMinutes(5);
   private Duration accessTokenTtl = Duration.ofHours(1);
   private Duration idTokenTtl = Duration.ofHours(1);
@@ -73,6 +75,22 @@ public class OidcConfiguration {
 
   public void setLoginPageUri(String loginPageUri) {
     this.loginPageUri = loginPageUri;
+  }
+
+  public String getOauthConsentPageUri() {
+    return oauthConsentPageUri;
+  }
+
+  public void setOauthConsentPageUri(String oauthConsentPageUri) {
+    this.oauthConsentPageUri = oauthConsentPageUri;
+  }
+
+  public String getOidcConsentPageUri() {
+    return oidcConsentPageUri;
+  }
+
+  public void setOidcConsentPageUri(String oidcConsentPageUri) {
+    this.oidcConsentPageUri = oidcConsentPageUri;
   }
 
   public Duration getCodeTtl() {

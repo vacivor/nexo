@@ -10,16 +10,9 @@ export type User = {
   phone?: string
 }
 
-export type Tenant = {
-  id: number
-  uuid: string
-  name: string
-}
-
 export type Application = {
   id: number
   uuid: string
-  tenantId?: string
   clientType?: string
   clientId: string
   clientSecret: string
@@ -58,4 +51,29 @@ export type SessionView = {
   lastAccessedAt: string
   expiresAt?: string
   isNew: boolean
+}
+
+export type SessionPage = {
+  items: SessionView[]
+  nextCursor?: string
+  hasMore: boolean
+}
+
+export type ConsentView = {
+  requestId: string
+  csrfToken: string
+  clientId: string
+  scopes: string[]
+}
+
+export type ConsentDecision = {
+  redirectUri: string
+}
+
+export type UserConsentGrant = {
+  clientId: string
+  clientName: string
+  clientLogo?: string
+  scopes: string[]
+  grantedAt?: string
 }

@@ -1,8 +1,11 @@
-import { Banner, Layout, Typography } from '@douyinfe/semi-ui-19'
-import { Outlet } from 'react-router-dom'
+import { Banner, Button, Layout, Space, Typography } from '@douyinfe/semi-ui-19'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { SESSION_HEADER } from '../api/http'
 
 export function AuthLayout() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
   return (
     <Layout className="auth-shell">
       <Layout.Header className="app-header">
@@ -17,6 +20,20 @@ export function AuthLayout() {
           description={`Current ${SESSION_HEADER}: ${localStorage.getItem('nexoSessionId') ?? '(none)'}`}
           closeIcon={null}
         />
+        <Space style={{ marginTop: 12 }}>
+          <Button
+            type={location.pathname === '/auth' ? 'primary' : 'tertiary'}
+            onClick={() => navigate('/auth')}
+          >
+            Login
+          </Button>
+          <Button
+            type={location.pathname === '/auth/consents' ? 'primary' : 'tertiary'}
+            onClick={() => navigate('/auth/consents')}
+          >
+            My Consents
+          </Button>
+        </Space>
         <div style={{ marginTop: 16 }}>
           <Outlet />
         </div>

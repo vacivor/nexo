@@ -16,14 +16,38 @@ function formatDateTime(value?: string): string {
 
 export function SessionsPage() {
   const [sessions, setSessions] = useState<SessionView[]>([])
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined)
+  const [hasMore, setHasMore] = useState(false)
+  const [pageNo, setPageNo] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [loadingNext, setLoadingNext] = useState(false)
 
   const load = async () => {
     setLoading(true)
     try {
-      setSessions(await listSessions())
+      const page = await listSessions(undefined, 10)
+      setSessions(page.items ?? [])
+      setNextCursor(page.nextCursor)
+      setHasMore(Boolean(page.hasMore))
+      setPageNo(1)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadNextPage = async () => {
+    if (!hasMore || !nextCursor || loadingNext) {
+      return
+    }
+    setLoadingNext(true)
+    try {
+      const page = await listSessions(nextCursor, 10)
+      setSessions(page.items ?? [])
+      setNextCursor(page.nextCursor)
+      setHasMore(Boolean(page.hasMore))
+      setPageNo((prev) => prev + 1)
+    } finally {
+      setLoadingNext(false)
     }
   }
 
@@ -43,7 +67,7 @@ export function SessionsPage() {
           rowKey="id"
           loading={loading}
           dataSource={sessions}
-          pagination
+          pagination={false}
           columns={[
             { title: 'Principal', dataIndex: 'principal', render: (v: string) => v || '-' },
             { title: 'Session ID', dataIndex: 'id', render: (v: string) => <span style={{ wordBreak: 'break-all' }}>{v}</span> },
@@ -79,6 +103,12 @@ export function SessionsPage() {
             },
           ]}
         />
+        <Space style={{ marginTop: 16 }}>
+          <span>{`Page ${pageNo}`}</span>
+          <Button onClick={() => loadNextPage().catch(() => undefined)} disabled={!hasMore} loading={loadingNext}>
+            Next Page
+          </Button>
+        </Space>
       </Card>
     </Space>
   )

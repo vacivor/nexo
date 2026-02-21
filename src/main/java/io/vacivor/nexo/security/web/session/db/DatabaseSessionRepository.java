@@ -2,6 +2,7 @@ package io.vacivor.nexo.security.web.session.db;
 
 import io.micronaut.context.annotation.Requires;
 import io.vacivor.nexo.security.web.session.SessionAttributesCodec;
+import io.vacivor.nexo.security.core.session.SessionCursor;
 import io.vacivor.nexo.security.core.session.SessionSettings;
 import io.vacivor.nexo.security.core.session.SessionRepository;
 import io.vacivor.nexo.dal.entity.SessionEntity;
@@ -84,6 +85,31 @@ public class DatabaseSessionRepository implements SessionRepository<DatabaseSess
     int normalizedOffset = Math.max(0, offset);
     List<DatabaseSession> page = new ArrayList<>();
     for (SessionEntity entity : entityRepository.findPage(normalizedOffset, limit)) {
+      DatabaseSession session = toSession(entity);
+      if (session.isExpired()) {
+        deleteById(session.getId());
+        continue;
+      }
+      page.add(session);
+    }
+    return page;
+  }
+
+  @Override
+  public List<DatabaseSession> findSessionsByCursor(String cursor, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+    Optional<SessionCursor.CursorValue> cursorValue = SessionCursor.decode(cursor);
+    List<SessionEntity> entities;
+    if (cursorValue.isPresent()) {
+      SessionCursor.CursorValue value = cursorValue.get();
+      entities = entityRepository.findPageByCursor(value.lastAccessedAt(), value.id(), limit);
+    } else {
+      entities = entityRepository.findFirstPage(limit);
+    }
+    List<DatabaseSession> page = new ArrayList<>();
+    for (SessionEntity entity : entities) {
       DatabaseSession session = toSession(entity);
       if (session.isExpired()) {
         deleteById(session.getId());

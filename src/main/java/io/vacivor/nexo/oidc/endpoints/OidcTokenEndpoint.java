@@ -7,16 +7,16 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.serde.annotation.Serdeable;
 import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
 import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
+import io.vacivor.nexo.authorizationserver.client.ClientCredentialsResolver;
 import io.vacivor.nexo.authorizationserver.oidc.OidcIdTokenService;
 import io.vacivor.nexo.authorizationserver.oidc.OidcTokenService;
 import io.vacivor.nexo.oidc.OidcAccessToken;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,15 +27,18 @@ public class OidcTokenEndpoint {
   private final AuthorizationService authorizationService;
   private final OidcTokenService tokenService;
   private final OidcIdTokenService oidcIdTokenService;
+  private final ClientCredentialsResolver clientCredentialsResolver;
 
   public OidcTokenEndpoint(AuthorizationClientService authorizationClientService,
       AuthorizationService authorizationService,
       OidcTokenService tokenService,
-      OidcIdTokenService oidcIdTokenService) {
+      OidcIdTokenService oidcIdTokenService,
+      ClientCredentialsResolver clientCredentialsResolver) {
     this.authorizationClientService = authorizationClientService;
     this.authorizationService = authorizationService;
     this.tokenService = tokenService;
     this.oidcIdTokenService = oidcIdTokenService;
+    this.clientCredentialsResolver = clientCredentialsResolver;
   }
 
   @Post(value = "/oidc/token", consumes = MediaType.APPLICATION_FORM_URLENCODED, produces = MediaType.APPLICATION_JSON)
@@ -46,13 +49,9 @@ public class OidcTokenEndpoint {
     }
     String code = body.get("code");
     String redirectUri = body.get("redirect_uri");
-    String clientId = trimToNull(body.get("client_id"));
-    String clientSecret = trimToNull(body.get("client_secret"));
-    if (clientId == null || clientSecret == null) {
-      Map<String, String> basicAuth = resolveBasicClientCredentials(request);
-      clientId = clientId != null ? clientId : basicAuth.get("client_id");
-      clientSecret = clientSecret != null ? clientSecret : basicAuth.get("client_secret");
-    }
+    Optional<ClientCredentialsResolver.ClientCredentials> credentials = clientCredentialsResolver.resolve(request, body);
+    String clientId = credentials.map(ClientCredentialsResolver.ClientCredentials::clientId).orElse(null);
+    String clientSecret = credentials.map(ClientCredentialsResolver.ClientCredentials::clientSecret).orElse(null);
     if (code == null || clientId == null || redirectUri == null) {
       return oauthError(HttpStatus.BAD_REQUEST, "invalid_request");
     }
@@ -73,49 +72,24 @@ public class OidcTokenEndpoint {
         authCode.getScopes());
     String idToken = oidcIdTokenService.issueIdToken(authCode.getSubject(), clientId, authCode.getNonce());
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("access_token", accessToken.getToken());
-    response.put("token_type", "Bearer");
-    response.put("expires_in", accessToken.getExpiresAt().getEpochSecond() - Instant.now().getEpochSecond());
-    response.put("id_token", idToken);
-    response.put("scope", String.join(" ", authCode.getScopes()));
-    return HttpResponse.ok(response);
+    return HttpResponse.ok(new OidcTokenResponse(
+        accessToken.getToken(),
+        "Bearer",
+        accessToken.getExpiresAt().getEpochSecond() - Instant.now().getEpochSecond(),
+        idToken,
+        String.join(" ", authCode.getScopes())));
   }
 
-  private HttpResponse<Map<String, Object>> oauthError(HttpStatus status, String errorCode) {
-    Map<String, Object> body = new HashMap<>();
-    body.put("error", errorCode);
-    return HttpResponse.status(status).body(body);
+  private HttpResponse<OAuthErrorResponse> oauthError(HttpStatus status, String errorCode) {
+    return HttpResponse.status(status).body(new OAuthErrorResponse(errorCode));
   }
 
-  private String trimToNull(String value) {
-    if (value == null) {
-      return null;
-    }
-    String trimmed = value.trim();
-    return trimmed.isEmpty() ? null : trimmed;
+  @Serdeable
+  private record OidcTokenResponse(String access_token, String token_type, long expires_in, String id_token,
+                                   String scope) {
   }
 
-  private Map<String, String> resolveBasicClientCredentials(HttpRequest<?> request) {
-    String authorization = request.getHeaders().get("Authorization");
-    if (authorization == null || !authorization.startsWith("Basic ")) {
-      return Map.of();
-    }
-    try {
-      String base64Part = authorization.substring("Basic ".length()).trim();
-      String decoded = new String(Base64.getDecoder().decode(base64Part));
-      int separator = decoded.indexOf(':');
-      if (separator <= 0) {
-        return Map.of();
-      }
-      String clientId = decoded.substring(0, separator);
-      String clientSecret = decoded.substring(separator + 1);
-      if (clientId.isBlank() || clientSecret.isBlank()) {
-        return Map.of();
-      }
-      return Map.of("client_id", clientId, "client_secret", clientSecret);
-    } catch (IllegalArgumentException e) {
-      return Map.of();
-    }
+  @Serdeable
+  private record OAuthErrorResponse(String error) {
   }
 }

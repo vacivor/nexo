@@ -1,7 +1,6 @@
 import { Avatar, Layout, Nav, Breadcrumb, Button, Tooltip } from '@douyinfe/semi-ui-19'
 import {
   IconAppCenter,
-  IconApartment,
   IconBell,
   IconHelpCircle,
   IconLink,
@@ -13,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 type AdminLayoutProps = {
-  basePath?: '/admin' | '/platform' | '/tenant'
+  basePath?: '/admin' | '/platform'
   title?: string
 }
 
@@ -27,9 +26,6 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
       { itemKey: `${basePath}/providers`, text: 'Providers', icon: <IconLink /> },
       { itemKey: `${basePath}/sessions`, text: 'Sessions', icon: <IconSafe /> },
     ]
-    if (basePath === '/platform' || basePath === '/admin') {
-      items.splice(1, 0, { itemKey: `${basePath}/tenants`, text: 'Tenants', icon: <IconApartment /> })
-    }
     return items
   }, [basePath])
 

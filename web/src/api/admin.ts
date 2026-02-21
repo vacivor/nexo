@@ -1,5 +1,15 @@
 import { callApi } from './http'
-import type { Application, IdentityProvider, IdentityProviderProtocol, LoginResponse, SessionView, Tenant, User } from './types'
+import type {
+  Application,
+  ConsentDecision,
+  ConsentView,
+  IdentityProvider,
+  IdentityProviderProtocol,
+  LoginResponse,
+  SessionPage,
+  UserConsentGrant,
+  User,
+} from './types'
 import { resolveConsoleApiBase } from '../layout/consoleScope'
 
 function apiPath(path: string): string {
@@ -59,22 +69,6 @@ export async function deleteUser(userId: number): Promise<void> {
   await callApi(apiPath(`/users/${userId}`), 'DELETE')
 }
 
-export async function listTenants(): Promise<Tenant[]> {
-  return (await callApi<Tenant[]>(apiPath('/tenants'), 'GET')) ?? []
-}
-
-export async function getTenant(uuid: string): Promise<Tenant | undefined> {
-  return callApi<Tenant>(apiPath(`/tenants/${uuid}`), 'GET')
-}
-
-export async function createTenant(name: string): Promise<void> {
-  await callApi(apiPath('/tenants'), 'POST', { name })
-}
-
-export async function updateTenant(uuid: string, name: string): Promise<void> {
-  await callApi(apiPath(`/tenants/${uuid}`), 'PUT', { name })
-}
-
 export async function createApplication(input: {
   clientType: string
   name: string
@@ -92,7 +86,6 @@ export async function getApplication(uuid: string): Promise<Application | undefi
 }
 
 export async function updateApplication(uuid: string, input: {
-  tenantId?: string
   clientType?: string
   name?: string
   description?: string
@@ -162,10 +155,59 @@ export async function deleteProvider(uuid: string): Promise<void> {
   await callApi(apiPath(`/providers/${uuid}`), 'DELETE')
 }
 
-export async function listSessions(): Promise<SessionView[]> {
-  return (await callApi<SessionView[]>(apiPath('/sessions'), 'GET')) ?? []
+export async function listSessions(cursor?: string, limit = 10): Promise<SessionPage> {
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+  if (cursor && cursor.trim()) {
+    params.set('cursor', cursor.trim())
+  }
+  return (await callApi<SessionPage>(`${apiPath('/sessions')}?${params.toString()}`, 'GET')) ?? {
+    items: [],
+    hasMore: false,
+  }
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
   await callApi(apiPath(`/sessions/${encodeURIComponent(sessionId)}`), 'DELETE')
+}
+
+export async function getOauthConsent(requestId: string): Promise<ConsentView | undefined> {
+  return callApi<ConsentView>(`/oauth/consent?request_id=${encodeURIComponent(requestId)}`, 'GET')
+}
+
+export async function approveOauthConsent(input: { request_id: string; csrf_token: string }): Promise<ConsentDecision | undefined> {
+  return callApi<ConsentDecision>('/oauth/consent/approve', 'POST', input)
+}
+
+export async function denyOauthConsent(input: { request_id: string; csrf_token: string }): Promise<ConsentDecision | undefined> {
+  return callApi<ConsentDecision>('/oauth/consent/deny', 'POST', input)
+}
+
+export async function getOidcConsent(requestId: string): Promise<ConsentView | undefined> {
+  return callApi<ConsentView>(`/oidc/consent?request_id=${encodeURIComponent(requestId)}`, 'GET')
+}
+
+export async function approveOidcConsent(input: { request_id: string; csrf_token: string }): Promise<ConsentDecision | undefined> {
+  return callApi<ConsentDecision>('/oidc/consent/approve', 'POST', input)
+}
+
+export async function denyOidcConsent(input: { request_id: string; csrf_token: string }): Promise<ConsentDecision | undefined> {
+  return callApi<ConsentDecision>('/oidc/consent/deny', 'POST', input)
+}
+
+export async function listMyConsents(): Promise<UserConsentGrant[]> {
+  return (await callApi<UserConsentGrant[]>('/api/account/consents', 'GET')) ?? []
+}
+
+export async function revokeMyConsent(clientId: string): Promise<void> {
+  await callApi(`/api/account/consents/${encodeURIComponent(clientId)}`, 'DELETE')
+}
+
+export async function revokeMyConsentScopes(clientId: string, scopes: string[]): Promise<string[] | undefined> {
+  const response = await callApi<{ remainingScopes?: string[] }>(
+    `/api/account/consents/${encodeURIComponent(clientId)}/revoke-scopes`,
+    'POST',
+    { scopes },
+  )
+  return response?.remainingScopes
 }

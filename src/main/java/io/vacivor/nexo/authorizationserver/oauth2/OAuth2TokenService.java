@@ -1,9 +1,8 @@
 package io.vacivor.nexo.authorizationserver.oauth2;
 
+import io.vacivor.nexo.authorizationserver.client.ClientConfigurationService;
 import io.vacivor.nexo.core.RefreshTokenConsumeResult;
 import io.vacivor.nexo.core.RefreshTokenConsumeStatus;
-import io.vacivor.nexo.dal.entity.ApplicationEntity;
-import io.vacivor.nexo.dal.repository.ApplicationRepository;
 import io.vacivor.nexo.oauth2.store.OAuth2AccessTokenStore;
 import io.vacivor.nexo.oauth2.store.OAuth2RefreshTokenStore;
 import io.vacivor.nexo.oauth2.token.OAuth2AccessToken;
@@ -22,17 +21,17 @@ import java.util.Set;
 public class OAuth2TokenService {
 
   private final OidcConfiguration configuration;
-  private final ApplicationRepository applicationRepository;
+  private final ClientConfigurationService clientConfigurationService;
   private final OAuth2AccessTokenStore accessTokenStore;
   private final OAuth2RefreshTokenStore refreshTokenStore;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public OAuth2TokenService(OidcConfiguration configuration,
-      ApplicationRepository applicationRepository,
+      ClientConfigurationService clientConfigurationService,
       OAuth2AccessTokenStore accessTokenStore,
       OAuth2RefreshTokenStore refreshTokenStore) {
     this.configuration = configuration;
-    this.applicationRepository = applicationRepository;
+    this.clientConfigurationService = clientConfigurationService;
     this.accessTokenStore = accessTokenStore;
     this.refreshTokenStore = refreshTokenStore;
   }
@@ -136,17 +135,8 @@ public class OAuth2TokenService {
   }
 
   private Duration resolveRefreshTokenTtl(String clientId) {
-    return resolveClientEntity(clientId)
-        .map(ApplicationEntity::getRefreshTokenExpiration)
-        .filter(value -> value != null && value > 0)
+    return clientConfigurationService.findRefreshTokenExpirationSeconds(clientId)
         .map(Duration::ofSeconds)
         .orElse(configuration.getRefreshTokenTtl());
-  }
-
-  private Optional<ApplicationEntity> resolveClientEntity(String clientId) {
-    if (clientId == null || clientId.isBlank()) {
-      return Optional.empty();
-    }
-    return applicationRepository.findByClientId(clientId);
   }
 }

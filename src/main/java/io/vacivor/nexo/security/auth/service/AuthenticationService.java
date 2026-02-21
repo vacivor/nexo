@@ -1,21 +1,19 @@
 package io.vacivor.nexo.security.auth.service;
 
-import io.vacivor.nexo.security.auth.core.*;
-import io.vacivor.nexo.security.auth.service.*;
-import io.vacivor.nexo.security.auth.persistence.*;
-import io.vacivor.nexo.security.auth.handler.*;
-import io.vacivor.nexo.security.auth.password.*;
-import io.vacivor.nexo.security.auth.provider.local.*;
-import io.vacivor.nexo.security.auth.client.*;
-import io.vacivor.nexo.security.auth.dto.*;
-import io.vacivor.nexo.security.auth.web.*;
-
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
+import io.vacivor.nexo.security.auth.core.Authentication;
+import io.vacivor.nexo.security.auth.core.AuthenticationManager;
+import io.vacivor.nexo.security.auth.core.AuthenticationToken;
+import io.vacivor.nexo.security.auth.dto.LoginResponse;
+import io.vacivor.nexo.security.auth.handler.AuthenticationFailureHandler;
+import io.vacivor.nexo.security.auth.handler.AuthenticationSuccessHandler;
 import io.vacivor.nexo.security.auth.oauth2.GenericOAuth2Authentication;
 import io.vacivor.nexo.security.auth.oauth2.GithubOAuth2Authentication;
 import io.vacivor.nexo.security.auth.oauth2.OAuth2Authentication;
 import io.vacivor.nexo.security.auth.oidc.OidcAuthenticationToken;
+import io.vacivor.nexo.security.auth.persistence.AuthenticationPersistence;
+import io.vacivor.nexo.security.auth.provider.local.IdentifierPasswordAuthenticationToken;
 import io.vacivor.nexo.security.auth.social.SocialAuthenticationToken;
 import io.vacivor.nexo.security.providers.IdentityProviderProtocol;
 import io.vacivor.nexo.security.providers.IdentityProviderService;

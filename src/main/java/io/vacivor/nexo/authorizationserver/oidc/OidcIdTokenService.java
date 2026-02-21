@@ -1,7 +1,6 @@
 package io.vacivor.nexo.authorizationserver.oidc;
 
-import io.vacivor.nexo.dal.entity.ApplicationEntity;
-import io.vacivor.nexo.oidc.OidcClientService;
+import io.vacivor.nexo.authorizationserver.client.ClientConfigurationService;
 import io.vacivor.nexo.oidc.OidcConfiguration;
 import io.vacivor.nexo.oidc.OidcJwtSigner;
 import io.vacivor.nexo.oidc.OidcKeyService;
@@ -9,22 +8,21 @@ import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 
 @Singleton
 public class OidcIdTokenService {
 
   private final OidcConfiguration configuration;
-  private final OidcClientService clientService;
+  private final ClientConfigurationService clientConfigurationService;
   private final OidcJwtSigner jwtSigner;
   private final OidcKeyService keyService;
 
   public OidcIdTokenService(OidcConfiguration configuration,
-      OidcClientService clientService,
+      ClientConfigurationService clientConfigurationService,
       OidcJwtSigner jwtSigner,
       OidcKeyService keyService) {
     this.configuration = configuration;
-    this.clientService = clientService;
+    this.clientConfigurationService = clientConfigurationService;
     this.jwtSigner = jwtSigner;
     this.keyService = keyService;
   }
@@ -41,17 +39,8 @@ public class OidcIdTokenService {
   }
 
   private Duration resolveIdTokenTtl(String clientId) {
-    return resolveClientEntity(clientId)
-        .map(ApplicationEntity::getIdTokenExpiration)
-        .filter(value -> value != null && value > 0)
+    return clientConfigurationService.findIdTokenExpirationSeconds(clientId)
         .map(Duration::ofSeconds)
         .orElse(configuration.getIdTokenTtl());
-  }
-
-  private Optional<ApplicationEntity> resolveClientEntity(String clientId) {
-    if (clientId == null || clientId.isBlank()) {
-      return Optional.empty();
-    }
-    return clientService.findEntityByClientId(clientId);
   }
 }

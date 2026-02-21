@@ -99,7 +99,10 @@ public class OidcConsentService implements ConsentService {
     if (headerName != null && !headerName.isBlank()) {
       String headerValue = request.getHeaders().get(headerName);
       if (headerValue != null && !headerValue.isBlank()) {
-        return sessionManager.findById(headerValue.trim());
+        Optional<Session> byHeader = sessionManager.findById(headerValue.trim());
+        if (byHeader.isPresent()) {
+          return byHeader;
+        }
       }
     }
     Cookie cookie = request.getCookies().get(sessionConfiguration.getCookieName());

@@ -14,7 +14,7 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.serde.annotation.Serdeable;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
-import io.vacivor.nexo.ApplicationService;
+import io.vacivor.nexo.admin.application.ApplicationService;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,7 +68,6 @@ public class AdminApplicationController {
     List<String> redirectUris = applicationService.normalizeRedirectUris(request.redirectUris());
     return applicationService.updateApplication(
             uuid,
-            isBlank(request.tenantId()) ? null : request.tenantId().trim(),
             isBlank(request.clientType()) ? null : request.clientType().trim(),
             isBlank(request.name()) ? null : request.name().trim(),
             isBlank(request.description()) ? null : request.description().trim(),
@@ -102,7 +101,6 @@ public class AdminApplicationController {
     return new ApplicationResponse(
         application.getId(),
         application.getUuid(),
-        application.getTenantId(),
         application.getClientId(),
         application.getClientSecret(),
         application.getName(),
@@ -122,7 +120,7 @@ public class AdminApplicationController {
 
   @Introspected
   @Serdeable.Deserializable
-  public record UpdateApplicationRequest(String tenantId, String clientType, String name, String description,
+  public record UpdateApplicationRequest(String clientType, String name, String description,
                                          String logo,
                                          Integer idTokenExpiration, Integer refreshTokenExpiration,
                                          List<String> redirectUris) {
@@ -130,7 +128,7 @@ public class AdminApplicationController {
 
   @Introspected
   @Serdeable
-  public record ApplicationResponse(Long id, String uuid, String tenantId, String clientId,
+  public record ApplicationResponse(Long id, String uuid, String clientId,
                                     String clientSecret, String name, String description,
                                     String logo, String clientType,
                                     Integer idTokenExpiration, Integer refreshTokenExpiration,

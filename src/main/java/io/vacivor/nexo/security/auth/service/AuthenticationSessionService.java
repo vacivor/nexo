@@ -1,19 +1,10 @@
 package io.vacivor.nexo.security.auth.service;
 
-import io.vacivor.nexo.security.auth.core.*;
-import io.vacivor.nexo.security.auth.service.*;
-import io.vacivor.nexo.security.auth.persistence.*;
-import io.vacivor.nexo.security.auth.handler.*;
-import io.vacivor.nexo.security.auth.password.*;
-import io.vacivor.nexo.security.auth.provider.local.*;
-import io.vacivor.nexo.security.auth.client.*;
-import io.vacivor.nexo.security.auth.dto.*;
-import io.vacivor.nexo.security.auth.web.*;
-
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
+import io.vacivor.nexo.security.auth.core.Authentication;
 import io.vacivor.nexo.security.config.SecurityConfiguration;
 import io.vacivor.nexo.security.csrf.CsrfConfiguration;
 import io.vacivor.nexo.security.csrf.CsrfService;
@@ -67,7 +58,11 @@ public class AuthenticationSessionService {
   }
 
   public Optional<Session> touchSession(String sessionId) {
-    return sessionManager.findById(sessionId).map(session -> (Session) session);
+    Optional<? extends Session> session = sessionManager.findById(sessionId);
+    if (session.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(session.get());
   }
 
   public void clearSession(String sessionId, MutableHttpResponse<?> response) {

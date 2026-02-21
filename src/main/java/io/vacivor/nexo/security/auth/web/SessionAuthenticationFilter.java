@@ -1,26 +1,20 @@
 package io.vacivor.nexo.security.auth.web;
 
-import io.vacivor.nexo.security.auth.core.*;
-import io.vacivor.nexo.security.auth.service.*;
-import io.vacivor.nexo.security.auth.persistence.*;
-import io.vacivor.nexo.security.auth.handler.*;
-import io.vacivor.nexo.security.auth.password.*;
-import io.vacivor.nexo.security.auth.provider.local.*;
-import io.vacivor.nexo.security.auth.client.*;
-import io.vacivor.nexo.security.auth.dto.*;
-import io.vacivor.nexo.security.auth.web.*;
-
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
+import io.vacivor.nexo.security.auth.core.Authentication;
+import io.vacivor.nexo.security.auth.core.SecurityContext;
+import io.vacivor.nexo.security.auth.service.AuthenticationSessionCodec;
+import io.vacivor.nexo.security.auth.service.AuthenticationSessionService;
 import io.vacivor.nexo.security.core.session.Session;
 import io.vacivor.nexo.security.core.session.SessionTransportSettings;
 import io.vacivor.nexo.security.core.session.SessionManager;
-import org.reactivestreams.Publisher;
 import java.util.Optional;
+import org.reactivestreams.Publisher;
 
 @Filter("/**")
 public class SessionAuthenticationFilter implements HttpServerFilter {
@@ -71,6 +65,10 @@ public class SessionAuthenticationFilter implements HttpServerFilter {
     if (cookie == null) {
       return Optional.empty();
     }
-    return sessionManager.findById(cookie.getValue()).map(session -> (Session) session);
+    Optional<? extends Session> session = sessionManager.findById(cookie.getValue());
+    if (session.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(session.get());
   }
 }

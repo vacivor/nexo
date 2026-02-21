@@ -73,13 +73,13 @@
   </ul>
 
   <div class="actions">
-    <form method="post" action="/oidc/consent/approve">
+    <form method="post" th:action="${approveAction}">
       <input type="hidden" name="request_id" th:value="${requestId}">
       <input type="hidden" name="csrf_token" th:value="${csrfToken}">
       <button class="btn approve" type="submit">Allow</button>
     </form>
 
-    <form method="post" action="/oidc/consent/deny">
+    <form method="post" th:action="${denyAction}">
       <input type="hidden" name="request_id" th:value="${requestId}">
       <input type="hidden" name="csrf_token" th:value="${csrfToken}">
       <button class="btn deny" type="submit">Deny</button>

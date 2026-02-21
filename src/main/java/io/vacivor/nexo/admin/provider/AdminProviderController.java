@@ -49,9 +49,11 @@ public class AdminProviderController {
   @Get("/{uuid}")
   @Produces(MediaType.APPLICATION_JSON)
   public HttpResponse<?> get(@PathVariable String uuid) {
-    return service.findByUuid(uuid)
-        .<HttpResponse<?>>map(entity -> HttpResponse.ok(toResponse(entity)))
-        .orElseGet(HttpResponse::notFound);
+    var entity = service.findByUuid(uuid);
+    if (entity.isEmpty()) {
+      return HttpResponse.notFound();
+    }
+    return HttpResponse.ok(toResponse(entity.get()));
   }
 
   @Put("/{uuid}")
@@ -60,17 +62,21 @@ public class AdminProviderController {
     if (!isValid(request)) {
       return HttpResponse.badRequest(Map.of("error", "invalid_request"));
     }
-    return service.update(uuid, toEntity(request))
-        .<HttpResponse<?>>map(entity -> HttpResponse.ok(toResponse(entity)))
-        .orElseGet(HttpResponse::notFound);
+    var entity = service.update(uuid, toEntity(request));
+    if (entity.isEmpty()) {
+      return HttpResponse.notFound();
+    }
+    return HttpResponse.ok(toResponse(entity.get()));
   }
 
   @Patch("/{uuid}/enabled/{enabled}")
   @Produces(MediaType.APPLICATION_JSON)
   public HttpResponse<?> setEnabled(@PathVariable String uuid, @PathVariable boolean enabled) {
-    return service.setEnabled(uuid, enabled)
-        .<HttpResponse<?>>map(entity -> HttpResponse.ok(toResponse(entity)))
-        .orElseGet(HttpResponse::notFound);
+    var entity = service.setEnabled(uuid, enabled);
+    if (entity.isEmpty()) {
+      return HttpResponse.notFound();
+    }
+    return HttpResponse.ok(toResponse(entity.get()));
   }
 
   @Delete("/{uuid}")

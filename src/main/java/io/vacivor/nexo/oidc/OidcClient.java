@@ -2,18 +2,18 @@ package io.vacivor.nexo.oidc;
 
 import io.vacivor.nexo.core.ClientDetails;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
+import java.net.URI;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OidcClient implements ClientDetails {
 
   private final ApplicationEntity entity;
-  private final OidcClientService clientService;
 
-  public OidcClient(ApplicationEntity entity, OidcClientService clientService) {
+  public OidcClient(ApplicationEntity entity) {
     this.entity = entity;
-    this.clientService = clientService;
   }
 
   public String getClientId() {
@@ -48,10 +48,41 @@ public class OidcClient implements ClientDetails {
   }
 
   public boolean verifySecret(String secret) {
-    return clientService.validateSecret(entity, secret);
+    String actual = entity.getClientSecret();
+    return actual != null && actual.equals(secret);
   }
 
   public boolean isRedirectUriAllowed(String redirectUri) {
-    return clientService.isRedirectUriAllowed(entity, redirectUri);
+    if (entity.getRedirectUris() == null || redirectUri == null) {
+      return false;
+    }
+    Optional<String> candidate = normalizeRedirectUri(redirectUri);
+    if (candidate.isEmpty()) {
+      return false;
+    }
+    Set<String> allowed = Arrays.stream(entity.getRedirectUris().split(","))
+        .map(OidcClient::normalizeRedirectUri)
+        .flatMap(Optional::stream)
+        .collect(Collectors.toSet());
+    return allowed.contains(candidate.get());
+  }
+
+  private static Optional<String> normalizeRedirectUri(String value) {
+    if (value == null) {
+      return Optional.empty();
+    }
+    String trimmed = value.trim();
+    if (trimmed.isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      URI uri = URI.create(trimmed);
+      if (!uri.isAbsolute() || uri.getFragment() != null) {
+        return Optional.empty();
+      }
+      return Optional.of(trimmed);
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
   }
 }

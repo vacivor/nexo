@@ -10,7 +10,6 @@ export function ApplicationEditPage() {
   const basePath = resolveConsoleBasePath(location.pathname)
   const { uuid } = useParams<{ uuid: string }>()
 
-  const [tenantId, setTenantId] = useState('')
   const [clientType, setClientType] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -48,7 +47,6 @@ export function ApplicationEditPage() {
           navigate(`${basePath}/applications`)
           return
         }
-        setTenantId(app.tenantId ?? '')
         setClientType(app.clientType ?? '')
         setName(app.name ?? '')
         setDescription(app.description ?? '')
@@ -71,7 +69,6 @@ export function ApplicationEditPage() {
       <Card title="Edit OAuth Application" className="card-block" loading={loading}>
         <Space vertical style={{ width: '100%' }}>
           <Input value={uuid ?? ''} disabled />
-          <Input value={tenantId} onChange={setTenantId} placeholder="tenant uuid" />
           <Input value={clientType} onChange={setClientType} placeholder="client type" />
           <Input value={name} onChange={setName} placeholder="application name" />
           <TextArea
@@ -126,7 +123,6 @@ export function ApplicationEditPage() {
                 }
                 try {
                   await updateApplication(uuid, {
-                    tenantId: tenantId.trim() || undefined,
                     clientType: clientType.trim() || undefined,
                     name: name || undefined,
                     description: description.trim() || undefined,

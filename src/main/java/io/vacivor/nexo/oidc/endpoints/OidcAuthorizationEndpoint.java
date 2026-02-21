@@ -9,13 +9,12 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.uri.UriBuilder;
 import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
 import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
+import io.vacivor.nexo.authorizationserver.consent.AuthorizationConsentFlowService;
 import io.vacivor.nexo.security.auth.core.Authentication;
 import io.vacivor.nexo.security.auth.core.AuthenticationContext;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
 import io.vacivor.nexo.oidc.OidcConfiguration;
-import io.vacivor.nexo.oidc.OidcConsentRequest;
-import io.vacivor.nexo.oidc.OidcConsentService;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,18 +32,18 @@ public class OidcAuthorizationEndpoint {
   private final AuthorizationClientService authorizationClientService;
   private final AuthorizationService authorizationService;
   private final AuthenticationContext authenticationContext;
-  private final OidcConsentService consentService;
+  private final AuthorizationConsentFlowService consentFlowService;
   private final OidcConfiguration oidcConfiguration;
 
   public OidcAuthorizationEndpoint(AuthorizationClientService authorizationClientService,
       AuthorizationService authorizationService,
       AuthenticationContext authenticationContext,
-      OidcConsentService consentService,
+      AuthorizationConsentFlowService consentFlowService,
       OidcConfiguration oidcConfiguration) {
     this.authorizationClientService = authorizationClientService;
     this.authorizationService = authorizationService;
     this.authenticationContext = authenticationContext;
-    this.consentService = consentService;
+    this.consentFlowService = consentFlowService;
     this.oidcConfiguration = oidcConfiguration;
   }
 
@@ -77,24 +76,12 @@ public class OidcAuthorizationEndpoint {
       return temporaryRedirect(location);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
-    if (!authorizationService.isUserTenantAllowedForClient(subject, clientId)) {
-      LOG.warn("OIDC authorize rejected by tenant check. clientId={}, subject={}", clientId, subject);
-      return errorRedirect(redirectUri, "access_denied", state, "tenant_mismatch");
-    }
     Set<String> scopes = parseScopes(scope);
-    if (!consentService.hasConsent(subject, clientId, scopes)) {
+    Optional<HttpResponse<?>> consentRedirect = consentFlowService.resolveConsentRedirect(request, subject, clientId,
+        redirectUri, scopes, state, nonce.isBlank() ? null : nonce, oidcConfiguration.getOidcConsentPageUri());
+    if (consentRedirect.isPresent()) {
       LOG.info("OIDC authorize consent required. clientId={}, subject={}, scopes={}", clientId, subject, scopes);
-      Optional<OidcConsentRequest> pending = consentService.createPendingRequest(request, subject, clientId,
-          redirectUri, scopes, state, nonce.isBlank() ? null : nonce);
-      if (pending.isEmpty()) {
-        LOG.warn("OIDC authorize failed to create pending consent. clientId={}, subject={}", clientId, subject);
-        return HttpResponse.status(HttpStatus.UNAUTHORIZED);
-      }
-      URI consentPage = UriBuilder.of("/oidc/consent")
-          .queryParam("request_id", pending.get().getRequestId())
-          .build();
-      LOG.info("OIDC authorize redirecting to consent page. requestId={}", pending.get().getRequestId());
-      return temporaryRedirect(consentPage);
+      return consentRedirect.get();
     }
     OidcAuthorizationCode code = authorizationService.issueAuthorizationCode(clientId, redirectUri, subject, scopes,
         nonce.isBlank() ? null : nonce);
@@ -111,20 +98,6 @@ public class OidcAuthorizationEndpoint {
       return Collections.emptySet();
     }
     return new HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
-  }
-
-  private HttpResponse<?> errorRedirect(String redirectUri, String error, String state,
-      String errorDescription) {
-    if (redirectUri == null || redirectUri.isBlank()) {
-      return HttpResponse.status(HttpStatus.BAD_REQUEST);
-    }
-    UriBuilder builder = UriBuilder.of(redirectUri)
-        .queryParam("error", error)
-        .queryParam("state", state);
-    if (errorDescription != null && !errorDescription.isBlank()) {
-      builder.queryParam("error_description", errorDescription);
-    }
-    return temporaryRedirect(builder.build());
   }
 
   private HttpResponse<?> temporaryRedirect(URI location) {

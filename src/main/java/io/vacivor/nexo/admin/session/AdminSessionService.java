@@ -3,6 +3,7 @@ package io.vacivor.nexo.admin.session;
 import io.vacivor.nexo.security.auth.core.Authentication;
 import io.vacivor.nexo.security.auth.service.AuthenticationSessionCodec;
 import io.vacivor.nexo.security.auth.service.AuthenticationSessionService;
+import io.vacivor.nexo.security.core.session.SessionCursor;
 import io.vacivor.nexo.security.core.session.Session;
 import io.vacivor.nexo.security.core.session.SessionRepository;
 import io.micronaut.serde.annotation.Serdeable;
@@ -27,6 +28,18 @@ public class AdminSessionService {
     return sessionRepository.findSessions(offset, limit).stream()
         .map(this::toView)
         .toList();
+  }
+
+  public SessionPage listSessionsByCursor(String cursor, int limit) {
+    List<? extends Session> pageWithExtra = sessionRepository.findSessionsByCursor(cursor, limit + 1);
+    boolean hasMore = pageWithExtra.size() > limit;
+    List<? extends Session> page = hasMore ? pageWithExtra.subList(0, limit) : pageWithExtra;
+    String nextCursor = null;
+    if (hasMore && !page.isEmpty()) {
+      nextCursor = SessionCursor.encode(page.get(page.size() - 1));
+    }
+    List<SessionView> items = page.stream().map(this::toView).toList();
+    return new SessionPage(items, nextCursor, hasMore);
   }
 
   public long countSessions() {
@@ -75,5 +88,12 @@ public class AdminSessionService {
       Instant lastAccessedAt,
       Instant expiresAt,
       boolean isNew) {
+  }
+
+  @Serdeable
+  public record SessionPage(
+      List<SessionView> items,
+      String nextCursor,
+      boolean hasMore) {
   }
 }

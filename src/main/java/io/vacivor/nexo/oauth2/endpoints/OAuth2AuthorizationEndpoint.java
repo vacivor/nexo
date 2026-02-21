@@ -1,6 +1,7 @@
 package io.vacivor.nexo.oauth2.endpoints;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
@@ -9,8 +10,10 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.uri.UriBuilder;
 import io.vacivor.nexo.authorizationserver.authorization.AuthorizationService;
 import io.vacivor.nexo.authorizationserver.client.AuthorizationClientService;
+import io.vacivor.nexo.authorizationserver.consent.AuthorizationConsentFlowService;
 import io.vacivor.nexo.oidc.OidcAuthorizationCode;
 import io.vacivor.nexo.oidc.OidcClient;
+import io.vacivor.nexo.oidc.OidcConfiguration;
 import io.vacivor.nexo.security.auth.core.Authentication;
 import io.vacivor.nexo.security.auth.core.AuthenticationContext;
 import java.net.URI;
@@ -27,17 +30,23 @@ public class OAuth2AuthorizationEndpoint {
   private final AuthorizationClientService authorizationClientService;
   private final AuthorizationService authorizationService;
   private final AuthenticationContext authenticationContext;
+  private final AuthorizationConsentFlowService consentFlowService;
+  private final OidcConfiguration oidcConfiguration;
 
   public OAuth2AuthorizationEndpoint(AuthorizationClientService authorizationClientService,
       AuthorizationService authorizationService,
-      AuthenticationContext authenticationContext) {
+      AuthenticationContext authenticationContext,
+      AuthorizationConsentFlowService consentFlowService,
+      OidcConfiguration oidcConfiguration) {
     this.authorizationClientService = authorizationClientService;
     this.authorizationService = authorizationService;
     this.authenticationContext = authenticationContext;
+    this.consentFlowService = consentFlowService;
+    this.oidcConfiguration = oidcConfiguration;
   }
 
   @Get(uri = "/oauth/authorize")
-  public HttpResponse<?> authorize(@QueryValue("response_type") String responseType,
+  public HttpResponse<?> authorize(HttpRequest<?> request, @QueryValue("response_type") String responseType,
       @QueryValue("client_id") String clientId,
       @QueryValue("redirect_uri") String redirectUri,
       @QueryValue(value = "scope", defaultValue = "") String scope,
@@ -55,10 +64,12 @@ public class OAuth2AuthorizationEndpoint {
       return HttpResponse.status(HttpStatus.UNAUTHORIZED);
     }
     String subject = String.valueOf(authentication.get().getPrincipal());
-    if (!authorizationService.isUserTenantAllowedForClient(subject, clientId)) {
-      return errorRedirect(redirectUri, "access_denied", state, "tenant_mismatch");
-    }
     Set<String> scopes = parseScopes(scope);
+    Optional<HttpResponse<?>> consentRedirect = consentFlowService.resolveConsentRedirect(request, subject, clientId,
+        redirectUri, scopes, state, nonce.isBlank() ? null : nonce, oidcConfiguration.getOauthConsentPageUri());
+    if (consentRedirect.isPresent()) {
+      return consentRedirect.get();
+    }
     OidcAuthorizationCode code = authorizationService.issueAuthorizationCode(clientId, redirectUri, subject,
         scopes, nonce.isBlank() ? null : nonce);
     URI location = UriBuilder.of(redirectUri)
@@ -73,20 +84,6 @@ public class OAuth2AuthorizationEndpoint {
       return Collections.emptySet();
     }
     return new HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
-  }
-
-  private HttpResponse<?> errorRedirect(String redirectUri, String error, String state,
-      String errorDescription) {
-    if (redirectUri == null || redirectUri.isBlank()) {
-      return HttpResponse.status(HttpStatus.BAD_REQUEST);
-    }
-    UriBuilder builder = UriBuilder.of(redirectUri)
-        .queryParam("error", error)
-        .queryParam("state", state);
-    if (errorDescription != null && !errorDescription.isBlank()) {
-      builder.queryParam("error_description", errorDescription);
-    }
-    return temporaryRedirect(builder.build());
   }
 
   private HttpResponse<?> temporaryRedirect(URI location) {

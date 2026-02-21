@@ -24,10 +24,13 @@ public class IdentityProviderService {
   }
 
   public Optional<IdentityProviderEntity> update(String uuid, IdentityProviderEntity input) {
-    return repository.findByUuid(uuid).map(existing -> {
-      copy(input, existing);
-      return repository.update(existing);
-    });
+    Optional<IdentityProviderEntity> existing = repository.findByUuid(uuid);
+    if (existing.isEmpty()) {
+      return Optional.empty();
+    }
+    IdentityProviderEntity entity = existing.get();
+    copy(input, entity);
+    return Optional.of(repository.update(entity));
   }
 
   public Optional<IdentityProviderEntity> findByUuid(String uuid) {
@@ -56,10 +59,13 @@ public class IdentityProviderService {
   }
 
   public Optional<IdentityProviderEntity> setEnabled(String uuid, boolean enabled) {
-    return repository.findByUuid(uuid).map(existing -> {
-      existing.setEnabled(enabled);
-      return repository.update(existing);
-    });
+    Optional<IdentityProviderEntity> existing = repository.findByUuid(uuid);
+    if (existing.isEmpty()) {
+      return Optional.empty();
+    }
+    IdentityProviderEntity entity = existing.get();
+    entity.setEnabled(enabled);
+    return Optional.of(repository.update(entity));
   }
 
   private void copy(IdentityProviderEntity source, IdentityProviderEntity target) {

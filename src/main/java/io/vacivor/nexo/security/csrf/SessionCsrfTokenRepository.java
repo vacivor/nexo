@@ -40,14 +40,17 @@ public class SessionCsrfTokenRepository implements CsrfTokenRepository {
 
   @Override
   public Optional<CsrfToken> loadToken(HttpRequest<?> request) {
-    return resolveSession(request)
-        .map(session -> session.getAttribute(csrfConfiguration.getSessionAttributeName()))
-        .filter(String.class::isInstance)
-        .map(String.class::cast)
-        .filter(token -> !token.isBlank())
-        .map(token -> new CsrfToken(csrfConfiguration.getHeaderName(),
-            csrfConfiguration.getParameterName(),
-            token));
+    Optional<Session> session = resolveSession(request);
+    if (session.isEmpty()) {
+      return Optional.empty();
+    }
+    Object raw = session.get().getAttribute(csrfConfiguration.getSessionAttributeName());
+    if (!(raw instanceof String token) || token.isBlank()) {
+      return Optional.empty();
+    }
+    return Optional.of(new CsrfToken(csrfConfiguration.getHeaderName(),
+        csrfConfiguration.getParameterName(),
+        token));
   }
 
   @Override
@@ -88,7 +91,11 @@ public class SessionCsrfTokenRepository implements CsrfTokenRepository {
     if (cookie == null || cookie.getValue() == null || cookie.getValue().isBlank()) {
       return Optional.empty();
     }
-    return sessionManager.findById(cookie.getValue()).map(session -> (Session) session);
+    Optional<? extends Session> session = sessionManager.findById(cookie.getValue());
+    if (session.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(session.get());
   }
 
   private void writeSessionTransport(MutableHttpResponse<?> response, Session session) {

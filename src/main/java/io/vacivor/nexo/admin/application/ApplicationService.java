@@ -1,4 +1,4 @@
-package io.vacivor.nexo;
+package io.vacivor.nexo.admin.application;
 
 import io.vacivor.nexo.client.ClientIdGenerator;
 import io.vacivor.nexo.dal.entity.ApplicationEntity;
@@ -57,7 +57,6 @@ public class ApplicationService {
 
   public Optional<ApplicationEntity> updateApplication(
       String uuid,
-      String tenantId,
       String clientType,
       String name,
       String description,
@@ -65,17 +64,19 @@ public class ApplicationService {
       Integer idTokenExpiration,
       Integer refreshTokenExpiration,
       List<String> redirectUris) {
-    return applicationRepository.findByUuid(uuid).map(existing -> {
-      existing.setTenantId(tenantId);
-      existing.setClientType(clientType);
-      existing.setName(name);
-      existing.setDescription(description);
-      existing.setLogo(logo);
-      existing.setIdTokenExpiration(idTokenExpiration);
-      existing.setRefreshTokenExpiration(refreshTokenExpiration);
-      existing.setRedirectUris(String.join(",", redirectUris));
-      return applicationRepository.update(existing);
-    });
+    Optional<ApplicationEntity> existing = applicationRepository.findByUuid(uuid);
+    if (existing.isEmpty()) {
+      return Optional.empty();
+    }
+    ApplicationEntity entity = existing.get();
+    entity.setClientType(clientType);
+    entity.setName(name);
+    entity.setDescription(description);
+    entity.setLogo(logo);
+    entity.setIdTokenExpiration(idTokenExpiration);
+    entity.setRefreshTokenExpiration(refreshTokenExpiration);
+    entity.setRedirectUris(String.join(",", redirectUris));
+    return Optional.of(applicationRepository.update(entity));
   }
 
   public boolean deleteByUuid(String uuid) {
