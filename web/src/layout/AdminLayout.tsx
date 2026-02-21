@@ -121,6 +121,7 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
         <Layout.Sider
           style={{
             backgroundColor: 'var(--semi-color-bg-1)',
+            position: 'relative',
           }}
         >
           <Nav
@@ -130,21 +131,27 @@ export function AdminLayout({ basePath = '/admin', title = 'Admin' }: AdminLayou
             isCollapsed={collapsed}
             onCollapseChange={setCollapsed}
             onSelect={({ itemKey }) => navigate(String(itemKey))}
-            footer={{
-              collapseButton: (
-                <Tooltip content={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} position="right">
-                  <span>
-                    <Button
-                      icon={<IconSidebar />}
-                      type="tertiary"
-                      theme="borderless"
-                      onClick={() => setCollapsed(!collapsed)}
-                    />
-                  </span>
-                </Tooltip>
-              ),
-            }}
           />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 12,
+              left: collapsed ? '50%' : 'calc(100% - 28px)',
+              transform: 'translateX(-50%)',
+              transition: 'left 0.2s ease',
+            }}
+          >
+            <Tooltip content={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} position="right">
+              <span>
+                <Button
+                  icon={<IconSidebar />}
+                  type="tertiary"
+                  theme="borderless"
+                  onClick={() => setCollapsed(!collapsed)}
+                />
+              </span>
+            </Tooltip>
+          </div>
         </Layout.Sider>
         <Layout.Content
           style={{
